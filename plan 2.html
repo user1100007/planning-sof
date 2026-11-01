@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=0.8">
+<title>ផែនការសាលារៀន</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+   .paper {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,250,251,0.95));
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+    }
+    .seal {
+      background: radial-gradient(circle at center, rgba(239,68,68,0.16), rgba(239,68,68,0.03) 60%, transparent 70%);
+    }
+    .print-btn {
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+    }
+    .soft-border {
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    .para-box {
+      position: relative;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .para-box:hover {
+      border-color: rgba(37, 99, 235, 0.45);
+    }
+    .para-box[contenteditable="true"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      border-color: rgba(37, 99, 235, 0.6);
+    }
+    .para-actions {
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    .para-box:hover .para-actions {
+      opacity: 1;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      .para-box { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    }
+
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@300;400;600;700&display=swap');
+  :root {
+    --blue:#1565C0; --blue-dark:#0D47A1; --blue-light:#E3F2FD;
+    --green:#2E7D32; --orange:#E65100; --purple:#6A1B9A;
+    --red:#C62828; --gray:#455A64; --border:#B0BEC5;
+    --shadow:0 2px 8px rgba(0,0,0,.12);
+    --text:#1f2937;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html, body{
+    font-family:'Noto Sans Khmer',sans-serif;
+    background:#F0F4F8;
+    color:var(--text);
+    font-size:13px;
+    font-weight:500;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+  }
+  body, button, input, textarea, select{
+    font-family:'Noto Sans Khmer',sans-serif;
+    color:var(--text);
+    font-weight:500;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar{
+    background:linear-gradient(135deg,#0D47A1 0%,#1565C0 100%);
+    color:white;padding:10px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:200;box-shadow:var(--shadow);gap:8px;flex-wrap:wrap;
+  }
+  .topbar h1{font-size:14px;font-weight:800;flex:1;}
+  .firebase-status{font-size:11px;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#a0aec0;display:inline-block;}
+  .status-dot.online{background:#68d391;}
+  .status-dot.offline{background:#fc8181;}
+  .status-dot.syncing{background:#FFA726;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ── TABS ── */
+  .tabs{
+    background:white;border-bottom:2px solid #e2e8f0;
+    display:flex;gap:0;padding:0 16px;position:sticky;top:48px;z-index:190;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+  }
+  .tab{
+    padding:10px 20px;cursor:pointer;font-size:13px;font-weight:700;
+    color:#51606d;border-bottom:3px solid transparent;margin-bottom:-2px;
+    transition:all .2s;display:flex;align-items:center;gap:6px;
+  }
+  .tab:hover{color:var(--blue);}
+  .tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  /* ── TOOLBAR ── */
+  .toolbar{
+    background:white;padding:8px 16px;display:flex;gap:6px;flex-wrap:wrap;
+    border-bottom:1px solid #e2e8f0;
+  }
+  .btn{
+    padding:6px 12px;border:none;border-radius:5px;cursor:pointer;
+    font-family:'Noto Sans Khmer',sans-serif;font-size:11px;font-weight:700;
+    display:flex;align-items:center;gap:4px;transition:all .2s;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  .btn-save{background:#2E7D32;color:white;}
+  .btn-load{background:var(--blue);color:white;}
+  .btn-export{background:#E65100;color:white;}
+  .btn-import{background:#5D4037;color:white;}
+  .btn-reset{background:var(--red);color:white;}
+  .btn-print{background:#37474F;color:white;}
+  .btn-calc{background:#553c9a;color:white;}
+  .search-box{
+    padding:6px 10px;border:1.5px solid #cbd5e0;border-radius:5px;
+    font-family:'Noto Sans Khmer',sans-serif;font-size:12px;outline:none;width:180px;
+    color:var(--text);font-weight:500;
+  }
+  .search-box:focus{border-color:var(--blue);}
+
+  /* ── SUMMARY CARDS ── */
+  .summary-bar{display:flex;gap:8px;padding:10px 16px;flex-wrap:wrap;background:white;border-bottom:1px solid #e2e8f0;}
+  .stat-card{background:#F5F7FA;border-radius:8px;padding:7px 12px;flex:1;min-width:100px;border:1px solid #E0E4E8;}
+  .stat-card .label{font-size:10px;color:var(--gray);letter-spacing:.3px;font-weight:700;}
+  .stat-card .value{font-size:14px;font-weight:800;color:#111827;margin-top:2px;}
+  .stat-card .sub{font-size:9px;color:#6b7280;margin-top:1px;}
+  .stat-card.blue{background:#E3F2FD;border-color:#90CAF9;}
+  .stat-card.blue .value{color:#0D47A1;}
+  .stat-card.blue .label{color:#1565C0;}
+  .stat-card.green{background:#E8F5E9;border-color:#A5D6A7;}
+  .stat-card.green .value{color:var(--green);}
+  .stat-card.green .label{color:#2E7D32;}
+  .stat-card.orange{background:#FFF3E0;border-color:#FFCC80;}
+  .stat-card.orange .value{color:var(--orange);}
+  .stat-card.orange .label{color:#E65100;}
+  .stat-card.red{background:#FFEBEE;border-color:#EF9A9A;}
+  .stat-card.red .value{color:var(--red);}
+  .stat-card.red .label{color:#C62828;}
+  .stat-card.purple{background:#EDE7F6;border-color:#CE93D8;}
+  .stat-card.purple .value{color:var(--purple);}
+  .stat-card.purple .label{color:#6A1B9A;}
+
+  /* ── LOADING ── */
+  .loading-bar{height:3px;background:#e2e8f0;overflow:hidden;display:none;}
+  .loading-bar.active{display:block;}
+  .loading-bar::after{
+    content:'';position:absolute;left:-40%;width:40%;height:100%;
+    background:linear-gradient(90deg,transparent,var(--blue),transparent);
+    animation:loading 1.2s infinite;
+  }
+  @keyframes loading{to{left:140%;}}
+  .loading-bar{position:relative;}
+
+  /* ── TOAST ── */
+  .toast{
+    position:fixed;bottom:20px;right:20px;z-index:500;
+    background:#1a202c;color:white;padding:10px 16px;
+    border-radius:8px;font-size:12px;max-width:280px;
+    transform:translateY(100px);opacity:0;transition:all .3s;
+    pointer-events:none;border-left:4px solid #68d391;
+  }
+  .toast.success{border-color:#68d391;}
+  .toast.error{border-color:#fc8181;}
+  .toast.info{border-color:#63b3ed;}
+  .toast.show{transform:translateY(0);opacity:1;}
+
+  /* ── MAIN ── */
+  .main{padding:0;overflow-x:auto;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* ── TABLES ── */
+  table, th, td{
+    color:var(--text);
+    font-weight:500;
+  }
+  th{
+    font-weight:800 !important;
+  }
+  td{
+    color:#1f2937;
+  }
+
+  /* ══════════════════════════════════════════════
+     PANEL 1 — 3-YEAR PLAN TABLE
+  ══════════════════════════════════════════════ */
+  .table-wrap{overflow-x:auto;margin:12px 16px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+  #mainTable{border-collapse:collapse;width:100%;min-width:1000px;background:white;}
+  #mainTable thead th{
+    background:linear-gradient(180deg,#1a365d 0%,#2a4a7f 100%);
+    color:white;padding:9px 8px;text-align:center;
+    border:1px solid #1e3a6e;font-size:12px;font-weight:600;line-height:1.4;
+  }
+  #mainTable tbody tr:hover td{background:#ebf8ff !important;}
+  #mainTable tbody tr.section-header td{background:#1a365d;color:#fff;font-weight:700;font-size:12px;padding:8px 10px;}
+  #mainTable tbody tr.section-header:hover td{background:#2a4a7f !important;}
+  #mainTable tbody tr.sub-header td{background:#dbeafe;color:#1e3a8a;font-weight:700;}
+  #mainTable tbody tr.indicator-row td{background:#f8fafc;}
+  #mainTable tbody td{padding:6px 8px;border:1px solid #e2e8f0;vertical-align:middle;line-height:1.2;}
+  td.label-main{font-weight:700;padding:8px 10px;border-left:4px solid var(--blue);background:inherit;}
+  td.label-indicator{padding:7px 10px 7px 16px;border-left:3px solid #90cdf4;font-weight:600;}
+  td.label-gender{padding:5px 10px 5px 16px;color:#718096;font-size:12px;background:#f8fafc;}
+  .editable-cell{min-width:55px;cursor:pointer;border-radius:3px;transition:background .15s;}
+  .editable-cell:hover{background:#fff3bf !important;}
+  .editable-cell.editing{padding:0 !important;}
+  .cell-input{
+    width:100%;border:2px solid var(--blue);border-radius:3px;
+    padding:4px 6px;font-family:'Noto Sans Khmer',sans-serif;
+    font-size:12px;background:#fffde7;outline:none;resize:vertical;min-height:30px;
+  }
+  .budget-cell{color:var(--green);font-weight:700;}
+  .changed-cell{background:#fefcbf !important;}
+
+  /* ══════════════════════════════════════════════
+     SIGNATURE / DATE FOOTER (panels 2, 3, 4)
+  ══════════════════════════════════════════════ */
+  .sign-footer{margin:26px 16px 34px;}
+  .sign-table{width:100%;border-collapse:collapse;}
+  .sign-table td{text-align:center;vertical-align:top;padding:5px 10px 8px;font-size:12.5px;line-height:1.7;}
+  .sign-note{font-weight:600;color:#37474F;}
+  .sign-date{display:inline-block;min-width:150px;max-width:100%;border-bottom:1px dashed #90A4AE;
+    padding:2px 4px;outline:none;cursor:text;border-radius:2px;transition:background .15s,border-color .15s;
+    white-space:normal;word-break:break-word;}
+  .sign-date:empty:before{white-space:normal;}
+  .sign-date:hover{background:#fffde7;}
+  .sign-date:focus{border-bottom:1px dashed var(--blue);background:#fffde7;}
+  .sign-date:empty:before{content:attr(data-placeholder);color:#b0bec5;}
+  .sign-gap{display:block;height:34px;}
+  .sign-title{display:block;font-weight:700;margin-top:2px;}
+  .sign-name{display:block;font-weight:600;outline:none;cursor:text;border-radius:2px;
+    padding:1px 4px;transition:background .15s;}
+  .sign-name:hover{background:#fffde7;}
+  .sign-name:focus{background:#fffde7;}
+  .sign-name:empty:before{content:attr(data-placeholder);color:#b0bec5;font-weight:400;}
+  @media print{
+    .sign-name:empty:before{color:transparent;}
+  }
+  @media print{
+    .sign-date{border-bottom:1px solid #000;background:none !important;}
+  }
+
+  /* ══════════════════════════════════════════════
+     REPORT: LOCKED ROW (budget fully spent)
+  ══════════════════════════════════════════════ */
+  .r3-locked-row td{background:#eceff1 !important;}
+  .r3-locked{background:#eceff1 !important;color:#78909c;cursor:not-allowed;text-align:center;}
+
+  /* ══════════════════════════════════════════════
+     PANEL 2 — OPERATIONAL PLAN TABLE
+  ══════════════════════════════════════════════ */
+  .plan-wrap{overflow-x:auto;padding:12px 16px 20px;}
+  #planTable{border-collapse:collapse;width:100%;min-width:1200px;background:white;box-shadow:var(--shadow);border-radius:6px;overflow:hidden;}
+  #planTable th,#planTable td{border:1px solid var(--border);padding:6px 8px;vertical-align:middle;line-height:1.2;}
+  #planTable thead th{background:var(--blue);color:white;text-align:center;font-weight:700;font-size:12px;}
+  #planTable thead tr:nth-child(2) th{background:#1976D2;}
+  #planTable tr.total-row td{background:#FFF9C4;font-weight:700;font-size:13px;}
+  #planTable tr.standard-row td{background:#BBDEFB;font-weight:700;color:#0D47A1;font-size:13px;}
+  #planTable tr.indicator-row td{background:#EDE7F6;font-weight:600;color:#4527A0;}
+  #planTable tr.data-row:nth-child(even) td:not([contenteditable]){background:#F5F5F5;}
+  #planTable tr.data-row:hover td{background:#E1F5FE !important;}
+  #planTable td[contenteditable="true"]{background:#FAFFF5 !important;cursor:text;outline:none;min-width:55px;}
+  #planTable td[contenteditable="true"]:focus{background:#FFF9C4 !important;box-shadow:inset 0 0 0 2px var(--blue);}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;min-width:70px;}
+  td.num-readonly{background:#ECEFF1 !important;text-align:right;color:var(--blue);font-weight:700;min-width:70px;}
+
+  /* ── CALCULATOR ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center;}
+  .modal-overlay.active{display:flex;}
+  .calc-modal{background:white;border-radius:12px;padding:18px;width:300px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .calc-modal h3{text-align:center;margin-bottom:12px;color:#2d3748;font-size:14px;}
+  .calc-display{background:#1a202c;color:#68d391;border-radius:8px;padding:10px 14px;text-align:right;margin-bottom:10px;font-size:20px;font-family:monospace;min-height:50px;display:flex;flex-direction:column;justify-content:flex-end;}
+  .calc-display .expr{font-size:11px;color:#a0aec0;min-height:14px;}
+  .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+  .calc-btn{padding:11px 0;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;font-family:'Noto Sans Khmer',sans-serif;}
+  .calc-btn:hover{filter:brightness(1.1);transform:scale(1.04);}
+  .c-num{background:#edf2f7;color:#2d3748;}
+  .c-op{background:var(--blue);color:white;}
+  .c-eq{background:var(--green);color:white;grid-column:span 2;}
+  .c-clr{background:var(--red);color:white;}
+  .c-special{background:#553c9a;color:white;}
+  .c-pct{background:#744210;color:white;}
+  .calc-close{width:100%;margin-top:8px;padding:7px;background:#e2e8f0;border:none;border-radius:5px;cursor:pointer;font-size:12px;}
+  /* ══════════════════════════════════════════════
+     PANEL 3 — REPORT PLAN TABLE
+  ══════════════════════════════════════════════ */
+  .report-wrap{overflow-x:auto;padding:12px 16px 20px;}
+  #reportTable{border-collapse:collapse;width:100%;min-width:1200px;background:white;box-shadow:var(--shadow);border-radius:6px;overflow:hidden;}
+  #reportTable th,#reportTable td{border:1px solid var(--border);padding:6px 8px;vertical-align:middle;line-height:1.3;font-size:12px;}
+  #reportTable thead th{background:#1a365d;color:white;text-align:center;font-weight:700;font-size:12px;}
+  #reportTable tbody tr:hover td{background:#ebf8ff !important;}
+  #reportTable tr.r3-section td{background:#1a365d;color:#fff;font-weight:700;font-size:12px;padding:8px 10px;}
+  #reportTable tr.r3-group td{background:#dbeafe;color:#1e3a8a;font-weight:700;}
+  #reportTable tr.r3-summary td{background:#FFF9C4;font-weight:700;}
+  .r3-edit{cursor:text;}
+  .r3-edit:focus{background:#fffde7 !important;box-shadow:inset 0 0 0 2px #1565C0;outline:none;}
+  .r3-bud{background:#EDE7F6 !important;}
+  .r3-data td{padding:5px 7px;border:1px solid #e2e8f0;vertical-align:middle;font-size:12px;line-height:1.3;}
+  .logic-cell{cursor:pointer;text-align:center;font-weight:700;background:#f8fafc;}
+  .logic-cell:hover{background:#fff3bf !important;}
+  @media print{.topbar,.tabs,.toolbar,.summary-bar,.loading-bar,.toast,.modal-overlay{display:none !important;}.main{padding:0;}table{font-size:10px;}.table-wrap,.plan-wrap,.report-wrap{margin:0;padding:0;overflow:visible;}}
+
+/* ══════════════════════════════════════════════
+   PANEL 1 — PROJECT DOCUMENT (TOC + rich editor)
+══════════════════════════════════════════════ */
+#panel1 .doc-page{
+  max-width:900px;margin:0 auto 20px;background:#fff;border-radius:8px;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);padding:20px 22px;
+}
+#panel1 h2.section-title{
+  color:#1a5fb4;border-bottom:3px solid #1a5fb4;padding-bottom:8px;margin:0 0 12px;font-size:18px;
+}
+#panel1 table.toc{width:100%;border-collapse:collapse;margin-top:6px;}
+#panel1 table.toc th{background:#1a73e8;color:#fff;padding:9px;font-size:14px;}
+#panel1 table.toc td{border:1px solid #ccc;padding:6px 8px;vertical-align:middle;}
+#panel1 table.toc td.no{width:40px;text-align:center;}
+#panel1 table.toc td.page{width:90px;}
+#panel1 table.toc input.title-input{width:100%;border:none;background:transparent;font-family:inherit;font-size:13px;padding:4px;}
+#panel1 table.toc input.title-input:focus,
+#panel1 table.toc input.page-input:focus{background:#fffbdd;outline:1px solid #1a73e8;}
+#panel1 table.toc input.page-input{width:100%;border:none;background:transparent;text-align:center;font-family:inherit;font-size:13px;}
+#panel1 table.toc tr:hover{background:#f6f9ff;}
+#panel1 .toc-row-actions{display:flex;gap:4px;justify-content:center;}
+#panel1 .icon-btn{border:none;background:#f1f3f4;border-radius:4px;width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1;}
+#panel1 .icon-btn:hover{background:#e0e0e0;}
+#panel1 .icon-btn.del{color:#c62828;}
+#panel1 .add-row-btn{margin-top:12px;background:#1a73e8;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;}
+#panel1 .add-row-btn:hover{background:#1558b0;}
+#panel1 .content-section{margin-top:18px;border:1px solid #ddd;border-radius:8px;overflow:hidden;}
+#panel1 .content-header{background:#f1f3f4;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+#panel1 .content-header .htitle{font-weight:600;font-size:15px;color:#1a5fb4;}
+#panel1 .content-body{padding:0;display:none;}
+#panel1 .content-body.open{display:block;padding:14px;}
+#panel1 .doc-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;background:#fafafa;padding:6px;border-radius:6px;border:1px solid #eee;}
+#panel1 .doc-toolbar button{border:1px solid #ccc;background:#fff;border-radius:4px;padding:5px 10px;cursor:pointer;font-family:inherit;font-size:13px;}
+#panel1 .doc-toolbar button:hover{background:#eef3ff;}
+#panel1 .doc-editor{min-height:140px;border:1px solid #ccc;border-radius:6px;padding:12px;line-height:1.8;font-size:14px;outline:none;}
+#panel1 .doc-editor p{margin:6px 0;}
+#panel1 .toggle-arrow{transition:transform .2s;}
+#panel1 .toggle-arrow.rot{transform:rotate(90deg);}
+#panel1 .embed-block{position:relative;display:inline-block;vertical-align:top;width:280px;max-width:100%;margin:8px 6px;border:1px solid #d7dbe0;border-radius:6px;padding:8px;background:#fff;}
+#panel1 .embed-block .embed-content{width:100%;overflow:auto;}
+#panel1 .embed-content img{width:100%;height:auto;display:block;border-radius:3px;}
+#panel1 .embed-content table{width:100%;border-collapse:collapse;}
+#panel1 .embed-content table td,#panel1 .embed-content table th{border:1.5px solid #999;padding:6px 8px;min-width:30px;font-size:13px;}
+#panel1 .embed-content table th{background:#1a73e8;color:#fff;}
+#panel1 .embed-sticker{width:100%;height:100%;min-height:60px;display:flex;align-items:center;justify-content:center;user-select:none;font-size:44px;line-height:1;}
+#panel1 .embed-del{position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:50%;background:#e53935;color:#fff;border:2px solid #fff;font-size:13px;line-height:1;cursor:pointer;display:none;z-index:5;}
+#panel1 .embed-block:hover .embed-del,#panel1 .embed-block:focus-within .embed-del{display:block;}
+#panel1 .embed-handle{position:absolute;width:18px;height:18px;right:-6px;bottom:-6px;background:#1a73e8;border:2px solid #fff;border-radius:50%;cursor:nwse-resize;display:none;touch-action:none;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+#panel1 .embed-block:hover .embed-handle,#panel1 .embed-block.resizing .embed-handle{display:block;}
+#panel1 .embed-block.resizing{outline:2px dashed #1a73e8;}
+.sticker-picker{position:absolute;display:none;z-index:250;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:8px;width:230px;grid-template-columns:repeat(6,1fr);gap:4px;}
+.sticker-picker.open{display:grid;}
+.sticker-picker button{border:none;background:transparent;font-size:20px;border-radius:6px;cursor:pointer;padding:4px;}
+.sticker-picker button:hover{background:#eef3ff;}
+@media print{
+  #panel1 .add-row-btn,#panel1 .toc-row-actions,#panel1 .content-header,#panel1 .doc-toolbar,#panel1 .embed-del,#panel1 .embed-handle{display:none !important;}
+  #panel1 .content-body{display:block !important;}
+  #panel1 table.toc thead{display:none;}
+}
+</style>
+<body>
+<div class="topbar">
+  <h1>📚 ផែនការសាលារៀន</h1>
+  <div class="firebase-status">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">កំពុងភ្ជាប់...</span>
+    <span style="opacity:.6;font-size:10px" id="lastSaved"></span>
+  </div>
+</div>
+<div class="loading-bar" id="loadingBar"></div>
+
+<div class="tabs">
+  <div class="tab active" id="tab1" onclick="switchTab(1)">📘 ឯកសារគម្រោង</div>
+  <div class="tab" id="tab2" onclick="switchTab(2)">📊 ផែនការ ៣ ឆ្នាំ</div>
+  <div class="tab" id="tab3" onclick="switchTab(3)">📋 ផែនការប្រតិបត្តិ</div>
+  <div class="tab" id="tab4" onclick="switchTab(4)">📈 របាយការណ៍សមិទ្ធិកម្ម</div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="btn btn-save" onclick="currentSave()">💾 រក្សាទុក</button>
+  <button class="btn btn-load" onclick="currentLoad()">🔄 ផ្ទុក</button>
+  <button class="btn btn-export" onclick="currentExport()">⬇️ Export JSON</button>
+  <button class="btn btn-export" onclick="currentExportCSV()" style="background:#388E3C">⬇️ Export CSV</button>
+  <button class="btn btn-import" onclick="currentImport()">⬆️ Import JSON</button>
+  
+
+  <button class="btn btn-reset" onclick="currentReset()">🗑️ លុប</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImportFile(event)">
+  <input class="search-box" id="searchBox" type="text" placeholder="🔍 ស្វែងរក..." oninput="filterTable(this.value)">
+</div>
+<div class="main">
+  <div class="panel active" id="panel1">
+    <div class="doc-page">
+      <h2 class="section-title">មាតិកា</h2>
+      <table class="toc">
+        <thead>
+          <tr>
+            <th style="width:40px;">ល.រ</th>
+            <th>ចំណងជើង</th>
+            <th style="width:90px;">ទំព័រ</th>
+            <th style="width:60px;">សកម្មភាព</th>
+          </tr>
+        </thead>
+        <tbody id="tocBody"></tbody>
+      </table>
+      <button class="add-row-btn" id="addRowBtn">+ បន្ថែមចំណងជើងថ្មី</button>
+    </div>
+
+    <div class="doc-page">
+      <h2 class="section-title">ខ្លឹមសារ</h2>
+      <div id="sectionsContainer"></div>
+    </div>
+
+ 
+
+    <input type="file" id="photoInput" accept="image/*" style="display:none;">
+    <div class="sticker-picker" id="stickerPicker"></div>
+  </div>
+
+  <div class="panel" id="panel2">
+    <div class="summary-bar">
+      <div class="stat-card"><div class="label">💰 សរុបថវិការួម</div><div class="value" id="stat-grand1">—</div><div class="sub">រៀល</div></div>
+      <div class="stat-card blue"><div class="label">ស្តង់ដាទី១</div><div class="value" id="stat-std1">—</div><div class="sub">លទ្ធផលសិក្សា</div></div>
+      <div class="stat-card green"><div class="label">ស្តង់ដាទី២</div><div class="value" id="stat-std2">—</div><div class="sub">ការបង្រៀន-រៀន</div></div>
+      <div class="stat-card orange"><div class="label">ស្តង់ដាទី៣</div><div class="value" id="stat-std3">—</div><div class="sub">សហគមន៍</div></div>
+      <div class="stat-card red"><div class="label">ស្តង់ដាទី៤</div><div class="value" id="stat-std4">—</div><div class="sub">ដំណើរការ</div></div>
+      <div class="stat-card purple"><div class="label">ស្តង់ដាទី៥</div><div class="value" id="stat-std5">—</div><div class="sub">គណនេយ្យភាព</div></div>
+    </div>
+    <div class="table-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th rowspan="3" style="width:28px"></th>
+            <th rowspan="3" style="min-width:150px">ស្តង់ដា និងសូចនាករ</th>
+            <th rowspan="3" style="width:20px">ស្រី/ប្រុស</th>
+            <th rowspan="3" style="width:80px">ថវិកាឆ្នាំ<br>(N+1)២០២៥(រៀល)</th>
+            <th colspan="6">គោលដៅសូចនាករសមិទ្ធកម្ម</th>
+          </tr>
+          <tr>
+            <th rowspan="2" style="width:90px">ឆ្នាំN-1<br>២០២៤</th>
+            <th rowspan="2" style="width:90px">ឆ្នាំN<br>២០២៥</th>
+            <th colspan="2">ថវិកាគ្រងឆ្នាំN+1 ២០២៦</th>
+            <th rowspan="2" style="width:55px">N+2<br>២០២៧</th>
+            <th rowspan="2" style="width:55px">N+3<br>២០២៨</th>
+          </tr>
+          <tr>
+            <th style="width:55px">គោលដៅ<br><span style="font-size:9px;font-weight:400;color:#cfe2ff;">(ឯកតារៀល)</span></th>
+            <th style="min-width:180px">មូលហេតុ</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="sign-footer">
+      <table class="sign-table">
+        <tr>
+          <td style="width:33.34%"><span class="sign-note">(បានឃើញ និងឯកភាព)</span></td>
+          <td style="width:33.33%"><span class="sign-note">(បានឃើញ និងពិនិត្យត្រឹមត្រូវ)</span></td>
+          <td style="width:33.33%"><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="រោគ ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="រោគ ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="រោគ ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+          <td><span class="sign-gap"></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-title">ប្រធានគ.គ.ស</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+          <td><span class="sign-title">នាយកសាលា</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+          <td><span class="sign-title">អ្នករៀបចំ</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="panel3">
+    <div class="summary-bar">
+      <div class="stat-card"><div class="label">💰 សរុបថវិការួម</div><div class="value" id="card-grand-total">0</div><div class="sub">រៀល</div></div>
+      <div class="stat-card blue"><div class="label">ស្តង់ដាទី១</div><div class="value" id="card-std1">0</div><div class="sub">លទ្ធផលសិក្សា</div></div>
+      <div class="stat-card green"><div class="label">ស្តង់ដាទី២</div><div class="value" id="card-std2">0</div><div class="sub">ការបង្រៀន-រៀន</div></div>
+      <div class="stat-card orange"><div class="label">ស្តង់ដាទី៣</div><div class="value" id="card-std3">0</div><div class="sub">សហគមន៍</div></div>
+      <div class="stat-card red"><div class="label">ស្តង់ដាទី៤</div><div class="value" id="card-std4">0</div><div class="sub">ដំណើរការ</div></div>
+      <div class="stat-card purple"><div class="label">ស្តង់ដាទី៥</div><div class="value" id="card-std5">0</div><div class="sub">គណនេយ្យភាព</div></div>
+    </div>
+    <div class="plan-wrap">
+      <table id="planTable">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:22px">ល.រ</th>
+            <th rowspan="2" style="width:22px">សូចនាករ</th>
+            <th rowspan="2" style="width:200px">លទ្ធផលរំពឹងទុក</th>
+            <th rowspan="2" style="width:220px">សកម្មភាព</th>
+            <th rowspan="2" style="width:30px">ឯកតា</th>
+            <th colspan="4">ក្របខណ្ឌពេលវេលា</th>
+            <th rowspan="2" style="width:90px">អ្នកទទួលខុសត្រូវ</th>
+            <th rowspan="2" style="width:60px">ថវិកាសរុប</th>
+            <th colspan="4">ប្រភពថវិកា</th>
+          </tr>
+          <tr>
+            <th style="width:22px">Q1</th>
+            <th style="width:22px">Q2</th>
+            <th style="width:22px">Q3</th>
+            <th style="width:22px">Q4</th>
+            <th style="width:75px">រដ្ឋ</th>
+            <th style="width:75px">ដៃគូ</th>
+            <th style="width:75px">សហគមន៍</th>
+            <th style="width:75px">ផ្សេងៗ</th>
+          </tr>
+        </thead>
+        <tbody id="planBody"></tbody>
+      </table>
+    </div>
+
+    <div class="sign-footer">
+      <table class="sign-table">
+        <tr>
+          <td style="width:25%"><span class="sign-note">(បានឃើញ និងអនុម័ត)</span></td>
+          <td style="width:25%"><span class="sign-note">(បានឃើញ និងឯកភាព)</span></td>
+          <td style="width:25%"><span class="sign-note">(បានឃើញ និងពិនិត្យត្រឹមត្រូវ)</span></td>
+          <td style="width:25%"><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ពេត ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ពេត ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ពេត ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ពេត ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+          <td><span class="sign-gap"></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-title">ប្រធានមន្ទីរអ.យ.ក.ខ</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+          <td><span class="sign-title">ប្រធានការិយាល័យអ.យ.ក.ស</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+          <td><span class="sign-title">ប្រធានគ.ស.ស</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+          <td><span class="sign-title">នាយកសាលា</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="panel4">
+    <div class="summary-bar">
+      <div class="stat-card"><div class="label">💰 សរុបថវិការួម</div><div class="value" id="r3-grand-total">0</div><div class="sub">លានរៀល</div></div>
+      <div class="stat-card blue"><div class="label">ស្តង់ដាទី១</div><div class="value" id="r3-std1">0</div><div class="sub">លទ្ធផលសិក្សា</div></div>
+      <div class="stat-card green"><div class="label">ស្តង់ដាទី២</div><div class="value" id="r3-std2">0</div><div class="sub">ការបង្រៀន-រៀន</div></div>
+      <div class="stat-card orange"><div class="label">ស្តង់ដាទី៣</div><div class="value" id="r3-std3">0</div><div class="sub">សហគមន៍</div></div>
+      <div class="stat-card red"><div class="label">ស្តង់ដាទី៤</div><div class="value" id="r3-std4">0</div><div class="sub">ដំណើរការ</div></div>
+      <div class="stat-card purple"><div class="label">ស្តង់ដាទី៥</div><div class="value" id="r3-std5">0</div><div class="sub">គណនេយ្យភាព</div></div>
+    </div>
+    <div class="report-wrap">
+      <table id="reportTable">
+        <thead>
+          <tr>
+            <th rowspan="2" style="width:4%;">ល.រ</th>
+            <th rowspan="2" style="width:4%;">សូចនាករ</th>
+            <th rowspan="2" style="width:18%;">លទ្ធផលរំពឹងទុក</th>
+            <th rowspan="2" style="width:18%;">សកម្មភាព</th>
+            <th colspan="3" style="width:8%;">ស្ថានភាព</th>
+            <th rowspan="2" style="width:6%;">% នៃសម្រេចបាន</th>
+            <th rowspan="2" style="width:16%;">លទ្ធផលសម្រេច (ធាតុចេញ)</th>
+            <th rowspan="2" style="width:7%;">ថវិកាគ្រោង<br>(លានរៀល)</th>
+            <th colspan="4" style="width:12%;">ប្រភពធនធានចំណាយជាក់ស្ដែង(លានរៀល)</th>
+            <th rowspan="2" style="width:7%;">ថវិកានៅសល់</th>
+            <th rowspan="2" style="width:10%;">សេចក្ដីបញ្ជាក់ផ្សេងៗ</th>
+          </tr>
+          <tr>
+            <th>១</th><th>២</th><th>៣</th>
+            <th>រដ្ឋ</th>
+            <th>ដៃគូ</th>
+            <th>សហ<br>គមន៍</th>
+            <th>ផ្សេងៗ</th>
+          </tr>
+        </thead>
+        <tbody id="reportBody"></tbody>
+      </table>
+    </div>
+
+    <div class="sign-footer">
+      <table class="sign-table">
+        <tr>
+          <td style="width:50%"><span class="sign-note">(បានឃើញ និងពិនិត្យត្រឹមត្រូវ)</span></td>
+          <td style="width:50%"><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ថ្ងៃ....... ...កើត/រោច ខែ....... ឆ្នាំ....... ...ស័ក ព.ស......."></span></td>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ពេត ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-date" contenteditable="true" data-placeholder="ពេត ថ្ងៃទី..... ខែ....... ឆ្នាំ២០២៦"></span></td>
+          <td><span class="sign-gap"></span></td>
+        </tr>
+        <tr>
+          <td><span class="sign-title">ប្រធានគ.ស.ស</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+          <td><span class="sign-title">នាយកសាលា</span><span class="sign-gap"></span><span class="sign-name" contenteditable="true" data-placeholder="( ......................... )"></span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, onValue }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:"AIzaSyBNkab_tdoNkMfRIRy8LHw1S32c-l-U2GQ",
+  authDomain:"flutter-ai-playground-81ea7.firebaseapp.com",
+  databaseURL:"https://flutter-ai-playground-81ea7-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"flutter-ai-playground-81ea7",
+  storageBucket:"flutter-ai-playground-81ea7.firebasestorage.app",
+  messagingSenderId:"653381912019",
+  appId:"1:653381912019:web:7107cea50d71a9ad20db26"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const REF_3YEAR  = ref(db, 'school-plan/plan3year');
+const REF_ACTION = ref(db, 'school-plan/actionplan');
+const REF_REPORT = ref(db, 'school-plan/reportnplan');
+const REF_DOC    = ref(db, 'school-plan/coverdoc');
+const REF_STRUCTURE = ref(db, 'school-plan/structure');
+
+// ═══════════════════════════════════════════════════
+// PANEL 1 — PROJECT DOCUMENT (TOC editor)
+// ═══════════════════════════════════════════════════
+// ------- Khmer numeral helper -------
+const khDigits = ['០','១','២','៣','៤','៥','៦','៧','៨','៩'];
+function toKhmerNumber(n){
+  return String(n).split('').map(d => khDigits[parseInt(d,10)] ?? d).join('');
+}
+
+// ------- Default data (matches printed cover / matica) -------
+let tocData = [
+  { title: 'សេចក្ដីផ្ដើម', page: '២',
+    content: `<p style="text-indent:3em;text-align:left;">ការឆ្ពោះទៅសម្រេចបាននូវគោលដៅអប់រំឆ្នាំ២០៣០ ក្រសួងអប់រំ យុវជន និងកីឡា បានដាក់ចេញនូវកំណែទម្រង់វិស័យអប់រំ ស្របតាមយុទ្ធសាស្ត្របញ្ចកោណរបស់ រាជរដ្ឋាភិបាលនីតិកាលទី៧ ដែលផ្តោតលើសមាសភាគចំនួន៤ សំខាន់ៗគឺ៖ ១) ការគ្រប់គ្រងអប់រំ ២) ការគ្រប់គ្រងរដ្ឋបាលអប់រំ  ៣) ការគ្រប់គ្រងហិរញ្ញវត្ថុ ៤) ការគ្រប់គ្រងធនធានមនុស្ស។ដើម្បីចូលរួមសម្រេចបាននូវគោលនយោបាយអប់រំ សាលាបឋមសិក្សារោគ ចាំបាច់ត្រូវធានាឱ្យបានការផ្តល់សេវាអប់រំប្រកបដោយគុណភាពខ្ពស់សម្រាប់ទាំងអស់គ្នា ព្រមទាំងលើកទឹកចិត្ត និងគាំទ្រដល់គ្រូបង្រៀនកម្ពុជា និងលើកកម្ពស់សមត្ថភាពរបស់គ្រូបង្រៀនដែលជួយឱ្យអ្នកសិក្សាទទួលបានការអប់រំប្រកបដោយគុណភាព។</p>
+<p style="text-indent:3em;text-align:left;">លើសពីនេះថ្នាក់រៀន គឺជាថ្នាក់រៀនឆ្លាតវៃដែលផ្តល់ជូនសិស្សានុសិស្សនូវឱកាសដ៏ល្អបំផុតក្នុងការរៀនសូត្រ ស្របពេលដែលសិស្ស មានសុខភាពល្អ មានការលើកទឹកចិត្ត  និងមានការប្តេជ្ញាចិត្តសិក្សារៀនសូត្រ។សាលា បឋមសិក្សា រោគ  បានរៀបចំផែនការអភិវឌ្ឍសាលារៀន និងផែនការយុទ្ធសាស្ត្រ ផ្តោតសំខាន់លើលទ្ធផលសិក្សារបស់សិស្ស ដោយបង្កើនស្វ័យភាព ភាពជាម្ចាស់របស់សាលារៀន ក្នុងការអនុវត្តការគ្រប់គ្រង ប្រកបដោយចីរភាព គឺទាមទារឱ្យនាយកសាលា ឬគណៈគ្រប់គ្រងសាលារៀនមានបំណិនក្នុងការកៀរគរធនធានពីគ្រប់មជ្ឈដ្ឋាន បង្កើនការចូលរួម និងទំនុកចិត្តពីគ្រប់អ្នកពាក់ព័ន្ធក្នុងការអនុវត្តសកម្មភាពនៅសាលារៀន។</p>
+<p style="text-indent:3em;text-align:left;">ការរៀបចំផែនការអភិវឌ្ឍសាលារៀននេះ គឺមានសារៈសំខាន់ដល់សាលារៀនក្នុងការតាមដាននូវវឌ្ឍនភាពនៃការអនុវត្តសកម្មភាព និងវាយតម្លៃសាលារៀននៅតាមឆ្នាំសិក្សានីមួយៗ ព្រមទាំងបង្ហាញពីចំណុចសំខាន់ៗមួយចំនួនដូចជាចក្ខុវិស័យ បេសកកម្ម បញ្ហាប្រឈម ចំណុចដៅប្រចាំឆ្នាំ និងយុទ្ធសាស្ត្រ ព្រមទាំងសកម្មភាពជាអាទិភាពដើម្បីសម្រេចឱ្យបាននូវលទ្ធផលសិក្សាជាវិជ្ជមានរបស់សិស្សគ្រប់ៗគ្នា ទោះបីជាការអនុវត្ត ជួបនិងឧបសគ្គក៏ដោយ។ បញ្ហាប្រឈមនានា នឹងត្រូវបានដោះស្រាយតាមរយៈយុទ្ធសាស្ត្រ និងសកម្មភាពដែលត្រូវបានកំណត់ ដោយមានការចូលរួមពីគ្រូបង្រៀន សិស្ស និងសហគមន៍ ធ្វើការជំរុញ និងលើកទឹកចិត្ត ការចូលរួមរបស់មាតាបិតាអាណាព្យាបាល និងសហគមន៍ ក្នុងការអប់រំស្របតាមពាក្យស្លោកភាពជាដៃគូ រដ្ឋ និងសហគមន៍ដើម្បីការអប់រំ។</p>
+<p style="text-indent:3em;text-align:left;">សាលាបឋមសិក្សា រោគ បានចងក្រងនូវសកម្មភាពអនុវត្ត យុទ្ធសាស្ត្រ ដោយបានតាមដានការអភិវឌ្ឍនាឆ្នាំកន្លងមក និងការឈានទៅអនាគត ស្របតាមកម្មវិធីរបស់ ក្រសួងអប់រំ យុវជន និងកីឡា ដែលបានដាក់ចេញគោលការណ៍រួម ស្របតាមគោលនយោបាយ គឺបានដាក់ចេញឱ្យអនុវត្តស្តង់ដាសាលារៀនគំរូចំនួន៥ ស្តង់ដា៖</p>
+<ul>
+<li>ស្តង់ដាទី១ : លទ្ធផលសិក្សារបស់សិស្ស</li>
+<li>ស្តង់ដាទី២ : ការបង្រៀននិងរៀន</li>
+<li>ស្តង់ដាទី៣ : ការចូលរួមរបស់សហគមន៍</li>
+<li>ស្តង់ដាទី៤ : ដំណើរប្រតិបត្តិការនិងរដ្ឋបាលសាលារៀន</li>
+<li>ស្តង់ដាទី៥ : គណនេយ្យភាពរបស់សាលារៀន</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">សាលារៀនយើងខ្ញុំ សង្ឃឹមថា មានការចូលរួមពីដៃគូអភិវឌ្ឍ និងអង្គការមិនមែនរដ្ឋាភិបាល នានា នឹងសហការជាមួយសាលារៀន ក៏ដូចជាបានចូលរួមចំណែកជាមួយរាជរដ្ឋាភិបាល ក្នុងការជួយគាំទ្រផ្នែកបច្ចេកទេស និងថវិកាដើម្បីអនុវត្តតាមផែនការយុទ្ធសាស្ត្រថវិកាឆ្នាំ២០២៥-២០២៧នេះ ឲ្យកាន់តែមានប្រសិទ្ធភាពថែមទៀតស្របតាមកំណែទម្រង់ហិរញ្ញវត្ថុសាធារណៈ។</p>` },
+  { title: 'ចក្ខុវិស័យ', page: '៣',
+    content: `<ul>
+<li>សាលារៀននឹងក្លាយជាសាលាគំរូ ក្នុងការបណ្តុះធនធានមនុស្ស ប្រកបដោយ គុណភាព សមធម៌ និងបរិយាបន្ន។</li>
+<li>ដឹកនាំគ្រប់គ្រងសាលារៀន បានឆ្លើយតបទៅនឹងស្តង់ដាសាលារៀនគំរូមានប្រសិទ្ធភាព។</li>
+<li>ជាអង្គភាពដែលមានថ្នាក់ដឹកនាំសុចរិតភាព ក្នុងការផ្ដល់សេវាអប់រំសារធារណៈ។</li>
+</ul>` },
+  { title: 'បេសកកម្ម', page: '៣',
+    content: `<ul>
+<li>ពង្រឹងការដឹកនាំ និងគ្រប់គ្រងសាលារៀន ដើម្បីផ្ដល់សេវាអប់រំដល់សហគមន៍</li>
+<li>ដឹកនាំ គ្រប់គ្រងសាលារៀនឱ្យឆ្លើយតបទៅនឹងស្តង់ដាសាលារៀនគំរូមានប្រសិទ្ធភាព</li>
+<li>គ្រប់គ្រងការបង្រៀន និងរៀនឱ្យ</li>
+<li>គ្រប់គ្រងការងាររដ្ឋបាល</li>
+<li>គ្រប់គ្រងការងារបុគ្គលិក</li>
+<li>គ្រប់គ្រងការងារហិរញ្ញវត្ថុ</li>
+<li>ធ្វើរបាយការណ៍តាមការបរិច្ឆេទកំណត់ (បវេសនកាល ឆមាសទី១-២ និងដំណាច់ឆ្នាំ) ឱ្យបានទៀងទាត់និងរបាយការណ៍ផ្សេងៗទៀតតាមតម្រូវការរបស់ថ្នាក់លើ។</li>
+</ul>` },
+  { title: 'ស្ថានភាពបច្ចុប្បន្ន និងបញ្ហាប្រឈម', page: '៣-៦',
+    content: `<p><strong>៤.១ ស្ថានភាពបច្ចុប្បន្ន</strong></p>
+<ul>
+<li>លទ្ធផលសិក្សា</li>
+<li>អត្រាពិតចូលរៀនថ្មី៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ កន្លងមកការចូលរៀនថ្មីតាមអាយុសម្រេច</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">បាន ៩៩% ក្នុងនោះ ស្រីក៏បានចំនួន១០០% កត្តាដែលសម្រេចបានដូចនេះ គឺមក ពីការ ប្រមូកុមារដោយការផ្សព្វផ្សាយការចូលរៀនបានទាន់ពេលវេលា និងមានផែនទី ខ្នងផ្ទះ។</p>
+<ul>
+<li>អត្រាពិតនៃការសិក្សា៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ កន្លងមកអត្រាពិតនៃការសិក្សាសម្រេចបាន</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">៩៥% និងស្រីបានចំនួន ៩៧%។</p>
+<ul>
+<li>អត្រារួមនៃការសិក្សា៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ ន្លងមក អត្រារួមនៃការសិក្សាសម្រេចបាន</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">១០០% និងស្រីបានចំនួន១២៨ ភាគរយដែលចំនួននេះមានការកើន១០០% និងស្រីបានចំនួន១២៨ភាគរយ។</p>
+<ul>
+<li>អត្រាគង់វង្ស ៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ ន្លងមក សម្រេចបានអត្រាគង់វង្សបាន</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">តែ ៥% ស្រី១៧%ប៉ុណ្ណោះ ដោយមានសិស្សលើសអាយុច្រើនរៀននៅបឋមសិក្សា។</p>
+<ul>
+<li>អត្រាបោះបង់៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ ន្លងមកមានសិស្សបោះបង់ការសិក្សា ចំនួន១១% ស្រី ៦% តួលេខនេះបង្ហាញថាការបោះបង់ការសិក្សានៅមាន កម្រិតខ្ពស់នៅឡើយ។</li>
+<li>អត្រាត្រួតថ្នាក់៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ ន្លងមក មានអត្រាត្រួតថ្នាក់ដល់ទៅ</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">១០% និង សិស្ស ស្រី៦% តួលេខនេះក៏បង្ហាញថា ការត្រួតថ្នាក់មានកម្រិត ខ្ពស់នៅឡើយ។</p>
+<ul>
+<li>លទ្ធផលសិក្សាសិស្ស៖ នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ កន្លងមក លទ្ធផលសិស្សជាប់មធ្យមភាគ</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">មានចំនួន ៩០% និងសិស្សស្រីមានចំនួន៩៤% ។</p>
+<ul>
+<li>ការបង្រៀន និងរៀន</li>
+<li>គ្រូបង្រៀនបានរៀបចំកិច្ចតែងការបង្រៀនគ្រប់មុខវិជ្ជាបានចំនួន ៥០%</li>
+<li>គ្រូបង្រៀនបានរៀបចំកម្មវិធីសិក្សាប្រចាំឆ្នាំ និងប្រចាំខែបានចំនួន ៨០%</li>
+<li>គ្រូបង្រៀនមានសម្ភារឧបទ្ទេសសម្រាប់បង្រៀន និងរៀនបានចំនួន ៦០%</li>
+<li>គ្រូបង្រៀនរៀបចំសន្លឹកកិច្ចការសិស្សប្រចាំខែ ប្រចាំឆមាស និងប្រចាំឆ្នាំ ជាប្រចាំបានចំនួន ៤០%</li>
+<li>គ្រូបង្រៀនរៀបចំប្រឡងតេស្តសមត្ថភាពសិស្សប្រចាំខែ ប្រចាំឆមាសបានចំនួន ៩០%</li>
+<li>គ្រូបង្រៀនបានចូលរួមប្រជុំបច្ចេកទេសកម្រងប្រចាំខែបានចំនួន ៧០%</li>
+<li>រៀបចំសកម្មភាពជួយសិស្សរៀនយឺត ពុំទាន់ដល់ចំណុចដៅ</li>
+<li>គ្រូបង្រៀនតាមកាលវិភាគសិក្សាបានត្រឹមត្រូវ ប៉ុន្តែគុណភាពនៅមានកម្រិត</li>
+<li>ការងារសហគមន៍</li>
+<li>នៅក្នុងឆ្នាំសិក្សា២០២៣-២០២៤ កន្លងមក សហគមន៍ ក៏ដូចជាសប្បុរសនា បានចូលរួមសកម្មភាព ចាក់ដី ក្នុងបរិវេណសាលារៀនបានចំនួន២១០ឡានដែលសរុបជាទឹកប្រាក់៦,៥០០,០០០(ប្រាំមួយលានប្រាំរយ ពាន់រៀលគត់)។</li>
+<li>នៅក្នុងឆ្នាំសិក្សា២០២៤-២០២៥ សហគមន៍ទាំងពីរភូមិ រោគ និងមុខឈ្នាង ជួយជាថវិកា មួយគ្រួសារ ៥០,០០០រៀល(ប្រាំម៉ឺនរៀលគត់) សម្រាប់ផ្គត់ផ្គង់ការសាងសង់ បណ្ណាល័យ ដែលគិតជាទឹកប្រាក់សម្រាប់ឈ្នួលជាង ២៥,០០០,០០០ រៀល (ម្ភៃប្រាំលានរៀនគត់)។</li>
+<li>បង្កើតគណៈកម្មការគ្រប់គ្រងសាលារៀន(មានបង្គាប់ការ)</li>
+<li>មានគណៈកម្មការគ្រប់គ្រងសាលារៀន(គ.គ.ស.) និងគណៈកម្មការគ្រប់គ្រងថ្នាក់រៀន(គ.គ.ថ.) បានដំណើរការ តែមិនទាន់ដល់ចំណុចដៅ។</li>
+<li>មាតាបិតា អាណាព្យាបាលសិស្សចូលរួមប្រជុំបាន៥០% តាមការអញ្ជើញរបស់នាយកសាលា។</li>
+<li>ដំណើរការងារប្រតិបត្តិសាលារៀន</li>
+<li>រៀបចំចុះបញ្ជីវត្តមានគ្រូ សិស្សជាប្រចាំថ្ងៃ ប្រចាំសប្តាហ៍ និងប្រចាំខែបានត្រឹមត្រូវ</li>
+<li>រៀបចំទុកដាក់ឯកសារភ្ជួរក្រូណូទៅតាមប្រភេទ និងកាលបរិច្ឆេទបានត្រឹមត្រូវ តែមិនទាន់ដល់ចំណុចដៅ</li>
+<li>រៀបចំផែនការកែលម្អសាលារៀនគ្រប់ចំនួនរៀបចំរចនាសម្ព័ន្ធ និងបែងចែកតួនាទី ភារកិច្ច គ.គ.ស</li>
+<li>គ.គ.ថ. និង គ.ម.ស បានត្រឹមត្រូវ</li>
+<li>ចុះហត្ថលេខា និងរក្សាទុកបញ្ជីហៅឈ្មោះបញ្ជីពិន្ទុសិស្សបានត្រឹមជាប្រចាំ</li>
+<li>ត្រូវផ្តល់សៀវភៅតាមដានសៀវភៅសិក្ខាគារិកទៅគ្រូបង្រៀនឱ្យសិស្សបានគ្រប់ចំនួន</li>
+<li>ពង្រឹងវិន័យ សណ្តាប់ធ្នាប់ដល់គ្រូ និងសិស្សថែរក្សាអនាម័យបរិស្ថានសាលារៀនឱ្យមានសោភណ្ឌភាពជានិច្ច</li>
+<li>ការពារទប់ស្កាត់ចំណីអាហារហាមឃាត់ដឹកនាំលើកកម្ពស់សុខភាព អនាម័យសិស្សជាប្រចាំ។</li>
+<li>ការងារគណនេយ្យ</li>
+<li>ដាក់សាច់ប្រាក់ដែលប្រមូលបានពីសហគមន៍ចូលក្នុងគណនីធនាគារសាលារៀនបានត្រឹមត្រូវកសាច់ប្រាក់ពីធនាគារ ដោយមានរបាយការណ៍រាប់សាច់ប្រាក់ និងបង្ហាញថវិកាដល់អ្នកពាក់ ព័ន្ធឱ្យបានជ្រាប។</li>
+<li>ផ្សព្វផ្សាយពីចំណូល ចំណាយរបស់សាលារៀនដល់គណៈកម្មការគ្រប់គ្រងសាលារៀន និងអ្នកពាក់ព័ន្ធ តាមរយៈការប្រជុំ និងការបិទផ្សាយការទូទាត់ចំណូលចំណាយមានការទទួល ស្គាល់ចុះហត្ថលេខាពីប្រធាន អនុប្រធាន ហិរញ្ញិក និង គ.ម.ស. និងអ្នកស្នើសុំការទូទាត់ថវិកា មានតម្លាភាព និងត្រឹមត្រូវ។</li>
+<li>របាយការណ៍បានបញ្ញូនដល់ការិយាល័យអប់រំ បានទៀងទាត់។</li>
+<li>បិទបង្ហាញកិច្ចបញ្ជីការគណនេយ្យហិរញ្ញវត្ថុ និងលទ្ធផលសមិទ្ធកម្ម(លទ្ធផលតេស្តប្រចាំខែ)។</li>
+</ul>
+<p><strong>៤.២ បញ្ហាប្រឈម</strong></p>
+<ul>
+<li>ការតែងតាំងនាយក នាយករងថ្មី និងការតំឡើងថ្នាក់ជូនបុគ្គលិកមានភាពយឺតយ៉ាវ</li>
+<li>លទ្ធផលនៃការអនុវត្តមិនឆ្លើយតបទៅដល់ចំណុចដៅក្នុងផែនការយុទ្ធសាស្ត្រវិស័យអប់រំ</li>
+<li>ការត្រួតពិនិត្យតាមដានការអនុវត្តសម្មភាពមានភាពទន់ខ្សោយ</li>
+<li>ការរៀបចំផែនការ របាយការណ៍ និងទុកដាក់ឯកសារនៅមានកម្រិត</li>
+<li>ការអភិវឌ្ឍសម្ថភាពវិជ្ជាជីវៈមន្ត្រី មិនទាន់បានឆ្លើយតបដល់ចំណុចដៅ</li>
+<li>ការចូលរួមរបស់សហគមន៍នៅមានកម្រិត</li>
+<li>សាលារៀនខ្វះថវិកា និងសម្ភារៈផ្គត់ផ្គង់ដំណើរ</li>
+<li>ការការផ្ទេរថវិកាដំណើរការសាលារៀន មានភាពយឺតយ៉ាវអាគារសិក្សា១ខ្នង ៣បន្ទប់ ខ្វះថវិកាជួសជុល</li>
+<li>ទីចាត់ការជាប់បណ្ណាល័យ មានសម្លេងរំខាន</li>
+<li>បន្ទប់សិក្សាមិនទាន់មានសម្ភារៈគ្រប់គ្រាន់</li>
+<li>បង្គន់អនាម័យខ្វះទឹក និងសម្ភារៈប្រើប្រាស់</li>
+</ul>
+<ul>
+<li>រាល់បញ្ហាប្រឈមខាងលើ ជាមូលហេតុដែលគណៈគ្របគ្រងសាលាយើងខ្ញុំ ដឹកនាំមិនបានដល់ចំណុច</li>
+</ul>
+<p style="text-indent:3em;text-align:left;">ដៅ។គណៈគ្របគ្រងសាលាយើងខ្ញុំសូមឲ្យមានការយោគយល់ពីថ្នាក់លើ ហើយសូមសំណូមពរដល់អ្នកពាក់ព័ន្ធជាសហការ និងផ្ដល់នូវយុទ្ធសាស្ត្រ ក្នុងការកែលម្អដល់សាលាយើងខ្ញុំផងដែរ។</p>` },
+  { title: 'សូចនាករសមិទ្ធកម្ម និងគោលដៅ', page: '៧-១៨', content: '' },
+  { title: 'តម្រូវការថវិកា', page: '១៩-២១', content: '' }
+];
+
+const tocBody = document.getElementById('tocBody');
+const sectionsContainer = document.getElementById('sectionsContainer');
+
+function renderAll(){
+  tocBody.innerHTML = '';
+  sectionsContainer.innerHTML = '';
+  tocData.forEach((item, idx) => renderTocRow(item, idx));
+  tocData.forEach((item, idx) => renderSection(item, idx));
+}
+
+function renderTocRow(item, idx){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="no">${toKhmerNumber(idx+1)}</td>
+    <td><input class="title-input" data-idx="${idx}" data-field="title" value="${escapeAttr(item.title)}"></td>
+    <td class="page"><input class="page-input" data-idx="${idx}" data-field="page" value="${escapeAttr(item.page)}"></td>
+    <td>
+      <div class="toc-row-actions">
+        <button class="icon-btn del" data-idx="${idx}" title="លុប">✕</button>
+      </div>
+    </td>`;
+  tocBody.appendChild(tr);
+}
+
+function renderSection(item, idx){
+  const sec = document.createElement('div');
+  sec.className = 'content-section';
+  sec.innerHTML = `
+    <div class="content-header" data-idx="${idx}">
+      <span class="htitle">${toKhmerNumber(idx+1)}. ${escapeHtml(item.title || 'ចំណងជើងថ្មី')}</span>
+      <span class="toggle-arrow">▶</span>
+    </div>
+    <div class="content-body" data-body="${idx}">
+      <div class="doc-toolbar">
+        <button data-cmd="bold" title="ដិត"><b>B</b></button>
+        <button data-cmd="italic" title="ទ្រេត"><i>I</i></button>
+        <button data-cmd="underline" title="គូសបន្ទាត់ក្រោម"><u>U</u></button>
+        <button data-cmd="indent-para" title="ចូលបន្ទាត់ថ្មី (3em)">➡️</button>
+        <button data-cmd="unindent-para" title="ដកចេញ">⬅️</button>
+        <button data-cmd="newpara" title="កថាខណ្ឌថ្មី">¶ កថាខណ្ឌថ្មី</button>
+        <button data-cmd="insert-table" title="បញ្ចូលតារាង">⊞</button>
+        <button data-cmd="insert-photo" title="បញ្ចូលរូបភាព">🖼️</button>
+        <button data-cmd="insert-sticker" title="បញ្ចូលស្ទីកឃ័រ">😊</button>
+      </div>
+      <div class="doc-editor" contenteditable="true" data-idx="${idx}">${item.content || '<p style="text-indent:3em;text-align:left;">សរសេរខ្លឹមសារនៅទីនេះ...</p>'}</div>
+    </div>`;
+  sectionsContainer.appendChild(sec);
+  const editorEl = sec.querySelector('.doc-editor');
+  if (editorEl) rehydrateEmbeds(editorEl);
+}
+
+function escapeHtml(str){
+  return (str || '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+// ------- Event delegation -------
+tocBody.addEventListener('input', (e) => {
+  const idx = e.target.dataset.idx;
+  const field = e.target.dataset.field;
+  if (idx === undefined || !field) return;
+  tocData[idx][field] = e.target.value;
+  if (field === 'title') {
+    const htitleEl = document.querySelectorAll('.content-header .htitle')[idx];
+    if (htitleEl) htitleEl.textContent = `${toKhmerNumber(+idx+1)}. ${e.target.value}`;
+  }
+});
+
+tocBody.addEventListener('click', (e) => {
+  const btn = e.target.closest('.icon-btn.del');
+  if (!btn) return;
+  const idx = +btn.dataset.idx;
+  if (!confirm('តើអ្នកចង់លុបចំណងជើងនេះមែនទេ?')) return;
+  tocData.splice(idx, 1);
+  renderAll();
+});
+
+document.getElementById('addRowBtn').addEventListener('click', () => {
+  tocData.push({ title: '', page: '', content: '' });
+  renderAll();
+  // scroll to and focus new title input
+  const inputs = document.querySelectorAll('.title-input');
+  const last = inputs[inputs.length - 1];
+  if (last) { last.scrollIntoView({behavior:'smooth', block:'center'}); last.focus(); }
+});
+
+sectionsContainer.addEventListener('click', (e) => {
+  const header = e.target.closest('.content-header');
+  if (header) {
+    const idx = header.dataset.idx;
+    const body = sectionsContainer.querySelector(`.content-body[data-body="${idx}"]`);
+    const arrow = header.querySelector('.toggle-arrow');
+    body.classList.toggle('open');
+    arrow.classList.toggle('rot');
+    return;
+  }
+  const tbtn = e.target.closest('.doc-toolbar button');
+  if (tbtn) {
+    const cmd = tbtn.dataset.cmd;
+    const editor = tbtn.closest('.content-body').querySelector('.doc-editor');
+    editor.focus();
+    if (cmd === 'insert-table') { insertTable(editor); return; }
+    if (cmd === 'insert-photo') { openPhotoPicker(editor); return; }
+    if (cmd === 'insert-sticker') { openStickerPicker(editor, tbtn); return; }
+    applyCommand(cmd, editor);
+  }
+});
+
+sectionsContainer.addEventListener('input', (e) => {
+  const editor = e.target.closest('.doc-editor');
+  if (!editor) return;
+  const idx = +editor.dataset.idx;
+  tocData[idx].content = editor.innerHTML;
+});
+
+function getCurrentBlock(editor){
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  let node = sel.getRangeAt(0).startContainer;
+  while (node && node !== editor && node.nodeType !== 1) node = node.parentNode;
+  while (node && node !== editor && !['P','DIV','LI'].includes(node.tagName)) node = node.parentNode;
+  return (node && node !== editor) ? node : null;
+}
+
+function applyCommand(cmd, editor){
+  if (cmd === 'bold' || cmd === 'italic' || cmd === 'underline') {
+    document.execCommand(cmd, false, null);
+    return;
+  }
+  if (cmd === 'newpara') {
+    document.execCommand('insertHTML', false, '<p style="text-indent:3em;text-align:left;"><br></p>');
+    return;
+  }
+  const block = getCurrentBlock(editor);
+  if (!block) return;
+  if (cmd === 'indent-para') {
+    block.style.textIndent = '3em';
+    block.style.textAlign = 'left';
+  } else if (cmd === 'unindent-para') {
+    block.style.textIndent = '0';
+  }
+  const idx = +editor.dataset.idx;
+  tocData[idx].content = editor.innerHTML;
+}
+
+// ------- Insert table / photo / sticker (resizable embeds) -------
+function syncEditorContent(editor){
+  if (!editor) return;
+  const idx = +editor.dataset.idx;
+  tocData[idx].content = editor.innerHTML;
+}
+
+function insertEmbedHtml(editor, innerHtml, type, opts = {}){
+  const uid = 'embed_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  const width = opts.width || 280;
+  const heightStyle = opts.height ? `height:${opts.height}px;` : '';
+  const html = `<div class="embed-block" id="${uid}" data-type="${type}" contenteditable="false" style="width:${width}px;${heightStyle}">
+      <button type="button" class="embed-del" title="លុប">✕</button>
+      <div class="embed-content">${innerHtml}</div>
+      <span class="embed-handle" title="ប្ដូរទំហំ"></span>
+    </div>&nbsp;`;
+  document.execCommand('insertHTML', false, html);
+  const block = document.getElementById(uid);
+  if (block) setupEmbedBlock(block, editor);
+  syncEditorContent(editor);
+}
+
+function setupEmbedBlock(block, editor){
+  // delete button
+  block.querySelector('.embed-del').addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    block.remove();
+    syncEditorContent(editor);
+  });
+
+  // resize handle (mouse + touch via Pointer Events)
+  const handle = block.querySelector('.embed-handle');
+  let startX, startY, startW, startH;
+  handle.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault(); ev.stopPropagation();
+    startX = ev.clientX; startY = ev.clientY;
+    const rect = block.getBoundingClientRect();
+    startW = rect.width; startH = rect.height;
+    block.classList.add('resizing');
+    handle.setPointerCapture(ev.pointerId);
+
+    function onMove(mv){
+      const dx = mv.clientX - startX;
+      const dy = mv.clientY - startY;
+      const newW = Math.max(70, startW + dx);
+      block.style.width = newW + 'px';
+      if (block.dataset.type === 'sticker'){
+        const newH = Math.max(50, startH + dy);
+        block.style.height = newH + 'px';
+        const s = block.querySelector('.embed-sticker');
+        if (s) s.style.fontSize = Math.max(18, Math.min(newW, newH) * 0.65) + 'px';
+      } else if (block.dataset.type === 'image'){
+        block.style.height = 'auto';
+      }
+      // tables just resize by width; row/column sizing stays natural
+    }
+    function onUp(up){
+      handle.releasePointerCapture(up.pointerId);
+      block.classList.remove('resizing');
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      syncEditorContent(editor);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+// re-attach handlers to embed blocks already present in loaded content
+function rehydrateEmbeds(editor){
+  editor.querySelectorAll('.embed-block').forEach(block => setupEmbedBlock(block, editor));
+}
+
+function insertTable(editor){
+  const rowsStr = prompt('ចំនួនជួរដេក (rows)?', '3');
+  if (rowsStr === null) return;
+  const colsStr = prompt('ចំនួនជួរឈរ (columns)?', '3');
+  if (colsStr === null) return;
+  const rows = Math.max(1, Math.min(20, parseInt(rowsStr, 10) || 3));
+  const cols = Math.max(1, Math.min(10, parseInt(colsStr, 10) || 3));
+
+  let tableHtml = '<table contenteditable="true"><tbody>';
+  for (let r = 0; r < rows; r++){
+    tableHtml += '<tr>';
+    for (let c = 0; c < cols; c++){
+      if (r === 0){
+        tableHtml += `<th contenteditable="true">ចំណងជើង ${c+1}</th>`;
+      } else {
+        tableHtml += `<td contenteditable="true">&nbsp;</td>`;
+      }
+    }
+    tableHtml += '</tr>';
+  }
+  tableHtml += '</tbody></table>';
+
+  insertEmbedHtml(editor, tableHtml, 'table', { width: Math.min(560, 90 + cols * 90) });
+}
+
+function openPhotoPicker(editor){
+  const input = document.getElementById('photoInput');
+  input.dataset.forIdx = editor.dataset.idx;
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.naturalHeight / img.naturalWidth;
+        const width = 260;
+        const height = Math.round(width * ratio);
+        insertEmbedHtml(editor, `<img src="${reader.result}" alt="រូបភាព">`, 'image', { width, height });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  };
+  input.click();
+}
+
+const STICKERS = ['⭐','✅','❌','📌','🏆','👍','👏','❤️','😊','😀','🎉','📷','📋','📊','🔔','⚠️','💡','🌟','🎯','📝','🗓️','✔️','🔥','🙌'];
+
+function openStickerPicker(editor, anchorBtn){
+  const picker = document.getElementById('stickerPicker');
+  if (picker.classList.contains('open') && picker.dataset.forIdx === editor.dataset.idx){
+    picker.classList.remove('open');
+    return;
+  }
+  picker.innerHTML = STICKERS.map(s => `<button type="button" data-emoji="${s}">${s}</button>`).join('');
+  picker.dataset.forIdx = editor.dataset.idx;
+
+  const rect = anchorBtn.getBoundingClientRect();
+  picker.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+  picker.style.left = (window.scrollX + rect.left) + 'px';
+  picker.classList.add('open');
+
+  picker.onclick = (ev) => {
+    const b = ev.target.closest('button[data-emoji]');
+    if (!b) return;
+    insertEmbedHtml(editor, `<div class="embed-sticker">${b.dataset.emoji}</div>`, 'sticker', { width: 90, height: 90 });
+    picker.classList.remove('open');
+  };
+}
+
+document.addEventListener('click', (ev) => {
+  const picker = document.getElementById('stickerPicker');
+  if (!picker.classList.contains('open')) return;
+  if (ev.target.closest('.sticker-picker') || ev.target.closest('[data-cmd="insert-sticker"]')) return;
+  picker.classList.remove('open');
+});
+
+
+// ═══════════════════════════════════════════════════
+// PANEL 1 DATA
+// ═══════════════════════════════════════════════════
+let DEFAULT_ROWS = [["ថវិកា បឋម + មត្តេយ្យ","","","13,903,100","","","","","",""],["ថវិកា បមម","","","12,556,700","","","","","",""],["ស្តង់ដាទី១ លទ្ធផលសិក្សារបស់សិស្ស (៥សូចនាករគន្លឹះ ៩សូចនាកររង)","","","2,498,100","","","","","",""],["១ ការប្រមូលកុមារចូលរៀន","","","400,000","","","","","",""],["","ភាគរយកុមារថ្នាក់ទី១ចូលរៀនត្រឹមត្រូវតាមអាយុ","","400,000","98","100","100","- ធ្វើបច្ចុប្បន្នភាពស្ថិតិសិស្សអាយុ៦ឆ្នាំ","100","100"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["២ កុមាររៀនបានគង់វង្សនៅក្នុងសាលារៀន","","","429,500","","","","","",""],["","អត្រាបោះបង់ការសិក្សា","","429,500","4","2","1","- នាយកសាលាចាត់តំណាងចុះផ្ទះសិស្ស","1","0"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","អត្រាត្រួតថ្នាក់","","-","8","5","2","- ចុះផ្ទះសិស្សអវត្តមាន","2","1"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["៣ លទ្ធផលនៃការសិក្សារបស់សិស្ស","","","1,413,000","","","","","",""],["","ភាគរយសិស្សមាននិទ្ទេស A B និង C មុខវិជ្ជាភាសាខ្មែរ","","1,213,000","35","45","50","គណៈគ្រប់គ្រងដឹកនាំរៀបចំសំណួរតេស្ត","50","50"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","ភាគរយសិស្សមាននិទ្ទេស A B និង C មុខវិជ្ជាគណិតវិទ្យា","","200,000","35","45","50","• រៀបចំដំណើរការធ្វើតេស្ត","50","50"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","ភាគរយសិស្សថ្នាក់ទី៣ អានតាមស្តង់ដា (៤៥-៦០ ពាក្យ/នាទី)",""," -","40","45","50","• យកលទ្ធផលតេស្តទៅកែលម្អការបង្រៀន","50","50"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","ភាគរយសិស្សថ្នាក់ទី៦ អានតាមស្តង់ដា (១០០-១២០ ពាក្យ/នាទី)",""," -","40","45","50","គណៈគ្រប់គ្រងដឹកនាំរៀបចំតារាង","50","50"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["៤ ស្ថានភាពអាហារូបត្ថម្ភរបស់សិស្ស","","","105,000","","","","","",""],["","ភាគរយសិស្សមានស្ថានភាពអាហារូបត្ថម្ភធម្មតា",""," -","90","90","96","· រៀបចំបញ្ជីកត់ត្រាអំពីស្ថានភាពអាហារូបត្ថម្ភ","96","96"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","ភាគរយសិស្សដែលមានបញ្ហាអាហារូបត្ថម្ភទទួលបានអន្តរាគមន៍","","0","25","30","40","· រក្សទុកឯកសារភស្តុតាង","40","40"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","ភាគរយសិស្សក្រីក្រទទួលបានអាហារូបករណ៍","","105,000","70","80","85","· ស្រង់ស្ថិតិគ្រួសារសិស្សមានបណ្ណក្រីក្រ","85","85"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["៥ សីលធម៌ និងឥរិយាបថរបស់សិស្ស","","","150,600","","","","","",""],["","ភាគរយកុមារទទួលបានការប្រឹក្សាយោបល់","","150,600","30","50","60","- របាយការណ៍ចំនួនកុមារដែលទទួលប្រឹក្សា","60","60"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["","ភាគរយថ្នាក់រៀនដាក់ពិន្ទុ បំណិន សម្បទា និងចរិយាសម្បទា",""," -","40","50","90","របាយការណ៍ចំនួនថ្នាក់ដែលបានដាក់ពិន្ទុ","90","90"],["","","ស្រី","","","","","","",""],["","","ប្រុស","","","","","","",""],["ស្តង់ដាទី២ ការបង្រៀន និងរៀន (១០សូចនាករគន្លឹះ ២៩សូចនាកររង)","","","7,063,000","","","","","",""],["១ ការអនុវត្តវិធីសាស្ត្របង្រៀនថ្មី","","","1,585,000","","","","","",""],["","ភាគរយគ្រូ ថ្នាក់ទី១-៣ អនុវត្តកញ្ចប់អំណានថ្នាក់ដំបូង","","490,000","50","50","60","• អនុវត្តវិធីសាស្ត្របង្រៀនថ្មី","60","60"],["","ភាគរយគ្រូ ថ្នាក់ទី១-៣ អនុវត្តកញ្ចប់គណិតវិទ្យាថ្នាក់ដំបូង","","340,000","50","50","60","• អនុវត្តកញ្ចប់គណិតវិទ្យា","60","60"],["","ភាគរយគ្រូបង្រៀនចូលរៀនវគ្គអភិវឌ្ឍសមត្ថភាព","","300,000","25","30","30","សាលារៀបចំផែនការអភិវឌ្ឍ","30","30"],["","ចំនួនកិច្ចការជាគម្រោង គ្រូ ថ្នាក់ទី៤-៦/ឆ្នាំ","","240,000","1","2","5","• ធ្វើផែនការ Adaptive learning","5","5"],["","ភាគរយសិស្សបានធ្វើកិច្ចការផ្ទះ និងមានការកែពីគ្រូ","","115,000","25","30","35","• របាយការណ៍ផែនការ-លទ្ធផល","35","35"],["២ ការអនុវត្តកម្មវិធីសិក្សា និងការរៀបចំផែនការបង្រៀន","","","1,766,000","","","","","",""],["","ភាគរយថ្នាក់រៀនមានបំណែងចែកកម្មវិធីសិក្សា","","592,000","80","100","100","គ្រូរៀបចំបំណែងចែកកម្មវិធីប្រចាំឆ្នាំ","100","100"],["","ភាគរយគ្រូបានរៀបចំកិច្ចតែងការបង្រៀន","","984,000","60","70","75","គ្រូធ្វើស្វ័យវាយតម្លៃ","75","75"],["","ចំនួនដងថ្នាក់រៀនបិទទ្វារ","","100,000","2","2","1","រៀបចំរបាយការណ៍វត្តមានគ្រូ-សិស្ស","1","1"],["","ចំនួនថ្ងៃសាលាបិទ មិនតាមប្រតិទិន",""," -","4","2","1","អនុវត្តលិខិតលេខ ៥៤","1","1"],["","ភាគរយថ្នាក់ទី៤-៦ បានបង្រៀនភាសាបរទេស",""," -","60","70","80","ដាក់កម្មវិធីភាសាបរទេស","80","80"],["","ភាគរយថ្នាក់ទី៤-៦ បានបង្រៀនបំណិនជីវិតមូលដ្ឋាន",""," -","50","60","65","ដាក់មេរៀនបំណិនមូលដ្ឋាន","65","65"],["","ភាគរយសិស្សអវត្តមានលើស ៤ ដង/ឆ្នាំ",""," -","7","4","2","ស្រង់វត្តមានប្រចាំ","2","2"],["៣ សម្ភារៈរៀន និងបង្រៀន","","","2,954,000","","","","","",""],["","ភាគរយសិស្សមានសៀវភៅសិក្សាគោល","","689,000","80","85","85","រៀបចំបញ្ជីគ្រប់គ្រងសៀវភៅ","85","85"],["","ភាគរយសិស្ស ថ្នាក់ទី១-៣ មានកញ្ចប់អំណាន ដែលមាតាបិតាទិញ","","500,000","40","50","65","ណែនាំមាតាបិតាទិញសៀវភៅ","65","65"],["","ភាគរយគ្រូផលិត-ប្រើប្រាស់សម្ភារឧបទេស","","1,285,000","50","60","65","- មានសម្ភារគ្រប់គ្រាន់","65","65"],["","ភាគរយគ្រូប្រើប្រាស់បច្ចេកវិទ្យា","","480,000","20","40","50","គ្រូទទួលការបណ្ដុះបណ្ដាល","50","50"],["៤ ការជួយគាំទ្រសិស្ស","","","458,000","","","","","",""],["","ភាគរយសិស្ស-មាតាបិតា ចុះកិច្ចព្រមព្រៀង",""," -","20","25","25","ប្រជុំមាតាបិតា","25","25"],["","ភាគរយថ្នាក់ប្រជុំ-មាតាបិតា ទៀងទាត់",""," -","35","50","60","ចូលរួមប្រជុំ","60","60"],["","ភាគរយសិស្សរៀនយឺត ទទួលការជួយ/ខែ","","458,000","50","50","60","គ្រូរៀបចំ","60","60"],["៥ ដំណើរការបណ្ណាល័យ",""," "," -","","","","","",""],["","ចំនួនសៀវភៅសិស្សខ្ចី-សង/ឆ្នាំ",""," -","10","15","20","បណ្ណារក្សរៀបចំ","20","20"],["","ចំនួនដងគ្រូនាំសិស្សចូលបណ្ណាល័យ/ឆ្នាំ",""," -","15","25","25","ផែនការអំណាន","25","25"],["ស្តង់ដាទី៣ ការចូលរួមរបស់សហគន៍ (៣សូចនាករ ៥សូចនាកររង)","","","996,000","","","","","",""],["១ ការបង្កើត-ដំណើរការ គ.គ.ស. និង គ.គ.ថ.","","","626,000","","","","","",""],["","ចំនួនដង គ.គ.ស. ប្រជុំ/ឆ្នាំ","","526,000","2","3","4","- មានរបាយការណ៍ប្រជុំ","4","4"],["","ភាគរយថ្នាក់រៀនបង្កើត-ដំណើរការ គ.គ.ថ.","","100,000","40","50","60","- មានរចនាសម្ព័ន្ធ","70","75"],["២ ការចូលរួមរបស់សហគមន៍",""," "," -","","","","","",""],["","សាលាមានកិច្ចសហប្រតិបត្តិការជាមួយដៃគូ",""," -","អង្គការស្អាត","world vision(បណ្ណាល័យ)","world vision(សម្ភារ)","- ស្វែងរកដៃគូ","world vision","world vision"],["","ភាគរយសិស្សត្រៀមបោះបង់ ត្រឡប់មករៀន",""," -","2","8","10","- ប្រជុំណែនាំ-ទប់ស្កាត់","15","25"],["៣ ការគាំទ្ររបស់សហគមន៍","","","370,000","","","","","",""],["","បរិមាណចំណូលមូលនិធិ","","370,000","ស្មើ","ស្មើ","ស្មើ","- ប្រៀបធៀបចំណូល-ចំណាយ","ស្មើ","ស្មើ"],["ស្តង់ដាទី៤ ដំណើរការប្រតិបត្តិ (៦សូចនាករ ២១សូចនាកររង)","","","2,353,000","","","","","",""],["១ ការគ្រប់គ្រងទូទៅ និងរដ្ឋបាល","","","1,197,000","","","","","",""],["","ការរៀបចំទីចាត់ការ","","1,197,000","មានទីចាត់ការ","មានសម្ភារៈ","ទីចាត់ការថ្មី","- ស្អាត-រៀបចំ","ស្អាត","ស្អាត"],["","ប្រើប្រាស់ App គ្រប់គ្រងទិន្នន័យ",""," -","មាន APP","ប្រើប្រាស់","Version ថ្មី","- FMIS, HRMIS","Version ថ្មី","Version ថ្មី"],["","ភាគរយគ្រូលើស-ខ្វះ",""," -","1","0","0","· ប្រជុំ គ.គ.ស. ចាត់តំណាង","0","0"],["២ ការរៀបចំផែនការអភិវឌ្ឍ","","","672,000","","","","","",""],["","ផែនការ ៥ឆ្នាំ/៣ឆ្នាំ/ប្រចាំឆ្នាំ","","672,000","2","4","4","- ប្រជុំ-ពិភាក្សា","4","4"],["ស្តង់ដាទី៥ គណនេយ្យភាព (៣សូចនាករ ៥សូចនាកររង)","","","992,600","","","","","",""],["១ វេទិកាសាធារណៈ","","","112,000","","","","","",""],["","ការជួបប្រជុំមាតាបិតា",""," -","3ខែ/ម្ដង","3ខែ/ម្ដង","3ខែ/ម្ដង","• ប្រជុំ-ពិភាក្សា","3ខែ/ម្ដង","3ខែ/ម្ដង"],["២ ការផ្សព្វផ្សាយព័ត៌មានសាធារណៈ","","","880,600","","","","","",""],["","លទ្ធផលតេស្ត-ព័ត៌មានបិទផ្សាយ","","880,600","1ត្រីមាស/ម្ដង","1ត្រីមាស/ម្ដង","1ត្រីមាស/ម្ដង","• ប្រជុំ-ពិភាក្សា","ឯកសារ","ឯកសារ"]];
+
+let tableData1 = DEFAULT_ROWS.map((r,i)=>({id:i,cells:[...r]}));
+let changedRows1 = new Set();
+
+// ── Parse budget from string like "2,498,100" or " -" ──
+function parseBudget(s){ s=String(s||'').replace(/[^0-9.]/g,''); const n=parseFloat(s); return isNaN(n)?0:n; }
+function fmtBudget(n){ if(n===0)return '—'; return n.toLocaleString('en-US'); }
+
+// ── Calc Panel 1 standard budget totals from section-header rows ──
+function calcStdCards1(data){
+  // Find section-header rows by cells[0] matching ស្តង់ដាទីX
+  const stdMap={ 'std1':0,'std2':0,'std3':0,'std4':0,'std5':0 };
+  const stdPattern = [
+    {id:'std1', re:/^ស្តង់ដាទី១/},
+    {id:'std2', re:/^ស្តង់ដាទី២/},
+    {id:'std3', re:/^ស្តង់ដាទី៣/},
+    {id:'std4', re:/^ស្តង់ដាទី៤/},
+    {id:'std5', re:/^ស្តង់ដាទី៥/},
+  ];
+  data.forEach(row=>{
+    const c0 = row.cells[0]||'';
+    stdPattern.forEach(sp=>{
+      if(sp.re.test(c0)){
+        stdMap[sp.id] = parseBudget(row.cells[3]);
+      }
+    });
+  });
+  const total = stdMap.std1+stdMap.std2+stdMap.std3+stdMap.std4+stdMap.std5;
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=fmtBudget(v);};
+  se('stat-grand1', total);
+  se('stat-std1', stdMap.std1);
+  se('stat-std2', stdMap.std2);
+  se('stat-std3', stdMap.std3);
+  se('stat-std4', stdMap.std4);
+  se('stat-std5', stdMap.std5);
+}
+
+function renderTable1(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML='';
+  data.forEach((row,ri)=>{
+    const tr=document.createElement('tr');
+    const c=row.cells;
+    const c0=c[0]||'',c1=c[1]||'',c2=c[2]||'';
+    if(c0.match(/^ស្តង់ដា/)) tr.classList.add('section-header');
+    else if(c0.match(/^[១២៣៤៥]/)) tr.classList.add('sub-header');
+    else if(!c0&&c1&&!c2) tr.classList.add('indicator-row');
+    if(c0){
+      const td=makeTd1(c0,ri,0,changedRows1.has(ri));
+      td.colSpan=3;td.classList.add('label-main');tr.appendChild(td);
+    } else if(c1){
+      const b=document.createElement('td');b.style.cssText='width:28px;background:#f8fafc;border-right:none;';tr.appendChild(b);
+      const td=makeTd1(c1,ri,1,changedRows1.has(ri));td.colSpan=2;td.classList.add('label-indicator');tr.appendChild(td);
+    } else if(c2){
+      const b0=document.createElement('td');b0.style.cssText='width:28px;background:#f8fafc;border-right:none;';tr.appendChild(b0);
+      const b1=document.createElement('td');b1.style.cssText='background:#f8fafc;border-right:none;';tr.appendChild(b1);
+      const td=makeTd1(c2,ri,2,changedRows1.has(ri));td.classList.add('label-gender');tr.appendChild(td);
+    } else {
+      const td=document.createElement('td');td.colSpan=3;tr.appendChild(td);
+    }
+    for(let ci=3;ci<c.length;ci++){
+      const td=makeTd1(c[ci],ri,ci,changedRows1.has(ri));
+      if(ci===3)td.classList.add('budget-cell');
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+  calcStdCards1(data);
+}
+
+function makeTd1(text,ri,ci,changed){
+  const td=document.createElement('td');
+  td.dataset.row=ri;td.dataset.col=ci;td.textContent=text;
+  td.classList.add('editable-cell');
+  if(changed)td.classList.add('changed-cell');
+  td.addEventListener('dblclick',()=>startEdit1(td,ri,ci));
+  return td;
+}
+function startEdit1(td,ri,ci){
+  if(td.querySelector('textarea'))return;
+  const old=tableData1[ri].cells[ci];
+  td.classList.add('editing');
+  const ta=document.createElement('textarea');
+  ta.className='cell-input';ta.value=old;ta.rows=Math.max(2,Math.ceil(old.length/30));
+  td.textContent='';td.appendChild(ta);ta.focus();ta.select();
+  ta.addEventListener('blur',()=>finishEdit1(td,ta,ri,ci,old));
+  ta.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ta.blur();}
+    if(e.key==='Escape'){ta.value=old;ta.blur();}
+  });
+}
+function finishEdit1(td,ta,ri,ci,old){
+  const nv=ta.value.trim();
+  td.classList.remove('editing');td.textContent=nv;
+  if(nv!==old){
+    tableData1[ri].cells[ci]=nv;changedRows1.add(ri);
+    td.classList.add('changed-cell');
+    calcStdCards1(tableData1);
+  }
+  if(ci===3)td.classList.add('budget-cell');
+}
+
+// ═══════════════════════════════════════════════════
+// PANEL 2 DATA
+// ═══════════════════════════════════════════════════
+let PLAN_ROWS=[
+  { id:'total', type:'total', label:'សរុប', colspan:10 },
+  { id:'std1', type:'standard', label:'ស្តង់ដាទី១៖ លទ្ធផលសិក្សារបស់សិស្ស', colspan:10 },
+  { id:'s1g1', type:'indicator', label:'១ ការប្រមូលកុមារចូលរៀន', colspan:9 },
+  { id:'r1', type:'data', no:'', indicator:'១.១', result:'ភាគរយកុមារថ្នាក់ទី១ចូលរៀនត្រឹមត្រូវតាមអាយុ', activity:'សាលាបានប្រជុំជាមួយសហគមន៍ស្តីពីការប្រមូលកុមារចូលរៀន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s1g2', type:'indicator', label:'២ កុមាររៀនបានគង់វង្សនៅក្នុងសាលារៀន', colspan:9 },
+  { id:'r2', type:'data', no:'', indicator:'២.១', result:'អត្រាបោះបង់ការសិក្សា', activity:'ប្រជុំជាមួយអាណាព្យាបាលសិស្ស ជម្រុញកូនៗឱ្យមករៀន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r3', type:'data', no:'', indicator:'២.២', result:'អត្រាត្រួតថ្នាក់', activity:'ប្រជុំជាមួយសហគមន៍ ដើម្បីគាំទ្រកម្មវិធីជួយសិស្សរៀនយឺត', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s1g3', type:'indicator', label:'៣ លទ្ធផលនៃការសិក្សារបស់សិស្ស', colspan:9 },
+  { id:'r4', type:'data', no:'', indicator:'៣.១', result:'ភាគរយសិស្សមាននិទ្ទេស A B និង C មុខវិជ្ជាភាសាខ្មែរ', activity:'ធ្វើផែនការរៀនសូត្រ ធ្វើតេស្តស្តង់ដាតាមខែ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r5', type:'data', no:'', indicator:'៣.២', result:'ភាគរយសិស្សមាននិទ្ទេស A B និង C មុខវិជ្ជាគណិតវិទ្យា', activity:'ធ្វើតេស្តសិស្ស រៀបចំការប្រឡងឆមាស', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r6', type:'data', no:'', indicator:'៣.៣', result:'ភាគរយសិស្សថ្នាក់ទី៣ មានសមត្ថភាពអានតាមស្តង់ដា', activity:'អនុវត្តកញ្ចប់អំណានថ្នាក់ទី៣', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r7', type:'data', no:'', indicator:'៣.៤', result:'ភាគរយសិស្សថ្នាក់ទី៦ មានសមត្ថភាពអានតាមស្តង់ដា', activity:'អនុវត្តកញ្ចប់អំណានថ្នាក់ទី៦', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s1g4', type:'indicator', label:'៤ ស្ថានភាពអាហារូបត្ថម្ភរបស់សិស្ស', colspan:9 },
+  { id:'r8', type:'data', no:'', indicator:'៤.១', result:'ភាគរយសិស្សមានស្ថានភាពអាហារូបត្ថម្ភធម្មតា', activity:'កត់ត្រា តាមដានស្ថានភាពការលូតលាស់', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r9', type:'data', no:'', indicator:'៤.២', result:'ភាគរយសិស្សដែលមានបញ្ហាអាហារូបត្ថម្ភទទួលបានកិច្ចអន្តរាគមន៍', activity:'បញ្ជូនសិស្សទទួលសេវាសុខភាព', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r10', type:'data', no:'', indicator:'៤.៣', result:'ភាគរយសិស្សក្រីក្រទទួលបានអាហារូបករណ៍', activity:'ចុះឈ្មោះសិស្សមានបណ្ណសមធម៌', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s1g5', type:'indicator', label:'៥ សីលធម៌ និងឥរិយាបថរបស់សិស្ស', colspan:9 },
+  { id:'r11', type:'data', no:'', indicator:'៥.១', result:'ភាគរយកុមារទទួលបានការប្រឹក្សាយោបល់', activity:'គាំទ្រការពារកុមារពីអំពើហឹង្សា', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r12', type:'data', no:'', indicator:'៥.២', result:'ភាគរយថ្នាក់រៀនដាក់ពិន្ទុ បំណិន សម្បទា និងចរិយាសម្បទា', activity:'សាលាបានរៀបចំសៀវភៅតាមដានការសិក្សា', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+
+  { id:'std2', type:'standard', label:'ស្តង់ដាទី២៖ ការបង្រៀន និងរៀន (១០សូចនាករគន្លឹះ និង ២៩សូចនាកររង)', colspan:10 },
+  { id:'s2g1', type:'indicator', label:'១ ការអនុវត្តវិធីសាស្ត្របង្រៀនថ្មី', colspan:9 },
+  { id:'r13', type:'data', no:'', indicator:'១.១', result:'ភាគរយគ្រូ ថ្នាក់ទី១-៣ អនុវត្តកញ្ចប់អំណានថ្នាក់ដំបូង', activity:'អនុវត្តកញ្ចប់អំណាន ថ្នាក់ទី៣', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r14', type:'data', no:'', indicator:'១.២', result:'ភាគរយគ្រូ ថ្នាក់ទី១-៣ អនុវត្តកញ្ចប់គណិតវិទ្យាថ្នាក់ដំបូង', activity:'អនុវត្តកញ្ចប់អំណាន ថ្នាក់ទី៦', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r15', type:'data', no:'', indicator:'១.៣', result:'ភាគរយគ្រូបង្រៀនចូលរៀនវគ្គអភិវឌ្ឍសមត្ថភាព', activity:'គ្រូបានចូលរួមរៀនវគ្គជំនាញ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r16', type:'data', no:'', indicator:'១.៤', result:'ចំនួនកិច្ចការជាគម្រោង គ្រូ ថ្នាក់ទី៤-៦ ប្រចាំឆ្នាំ', activity:'ធ្វើរបាយការណ៍ ផែនការ និងកិច្ចការ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r17', type:'data', no:'', indicator:'១.៥', result:'ភាគរយសិស្សបានធ្វើកិច្ចការផ្ទះ និងមានការកែពីគ្រូ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g2', type:'indicator', label:'២ ការអនុវត្តកម្មវិធីសិក្សា និងការរៀបចំផែនការបង្រៀន', colspan:9 },
+  { id:'r18', type:'data', no:'', indicator:'២.១', result:'ភាគរយថ្នាក់រៀនមានបំណែងចែកកម្មវិធីសិក្សា', activity:'បែងចែកកម្មវិធីសិក្សាតាមមុខវិជ្ជា', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r19', type:'data', no:'', indicator:'២.២', result:'ភាគរយគ្រូបានរៀបចំកិច្ចតែងការបង្រៀន', activity:'គ្រូបានរៀបចំ ផ្ទៀងផ្ទាត់ ចុះហត្ថលេខាពីនាយក', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r20', type:'data', no:'', indicator:'២.៣', result:'ចំនួនដងថ្នាក់រៀនបិទទ្វារ (មធ្យម)', activity:'គ្រប់គ្រងវត្តមានបុគ្គលិក គ្រូ សិស្ស', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r21', type:'data', no:'', indicator:'២.៤', result:'ចំនួនថ្ងៃសាលាបិទ មិនតាមប្រតិទិន', activity:'គគថ មានផែនការប្រចាំថ្ងៃ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r22', type:'data', no:'', indicator:'២.៥', result:'ភាគរយថ្នាក់ទី៤-៦ បានបង្រៀនភាសាបរទេស', activity:'មានបញ្ចូលកម្មវិធីភាសាបរទេស', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r23', type:'data', no:'', indicator:'២.៦', result:'ភាគរយថ្នាក់ទី៤-៦ បានបង្រៀនបំណិនជីវិតមូលដ្ឋាន', activity:'មានបញ្ចូលកម្មវិធីបំណិនមូលដ្ឋាន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r24', type:'data', no:'', indicator:'២.៧', result:'ភាគរយសិស្សអវត្តមានលើស ៤ ដង/ឆ្នាំ', activity:'កត់ត្រា តាមដានសិស្សអវត្តមានច្រើន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g3', type:'indicator', label:'៣ សម្ភារៈរៀន និងបង្រៀន', colspan:9 },
+  { id:'r25', type:'data', no:'', indicator:'៣.១', result:'ភាគរយថ្នាក់រៀនមានបំណែងចែកកម្មវិធីសិក្សា', activity:'បែងចែកកម្មវិធីតាមមុខវិជ្ជា ចំនួនសិស្ស', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r26', type:'data', no:'', indicator:'៣.២', result:'ភាគរយសិស្ស ថ្នាក់ទី១-៣ មានកញ្ចប់អំណាន ដែលមាតាបិតាទិញ', activity:'ប្រជុំ គ្រូ-មាតាបិតា ពិភាក្សាការសិក្សាប្រចាំឆ្នាំ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r27', type:'data', no:'', indicator:'៣.៣', result:'ភាគរយគ្រូបង្រៀនផលិតនិងប្រើប្រាស់សម្ភារឧបទេស', activity:'ធ្វើរបាយការណ៍ ចំនួនសិស្សទិញកញ្ចប់អំណាន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r28', type:'data', no:'', indicator:'៣.៤', result:'ភាគរយគ្រូប្រើប្រាស់បច្ចេកវិទ្យាបំរើការរៀន', activity:'បង្កើនចំនួនគ្រូប្រើប្រាស់កុំព្យូទ័រ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g4', type:'indicator', label:'៤ ការជួយគាំទ្រសិស្ស', colspan:9 },
+  { id:'r29', type:'data', no:'', indicator:'៤.១', result:'ភាគរយសិស្ស-មាតាបិតា ចុះកិច្ចព្រមព្រៀងប្រចាំឆ្នាំ', activity:'សាលាមានបញ្ជីកត់ត្រា ចំនួនសិស្សទទួលលំហាត់', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r30', type:'data', no:'', indicator:'៤.២', result:'ភាគរយថ្នាក់រៀនប្រជុំ-មាតាបិតា ពិនិត្យការរៀនទៀងទាត់', activity:'ចុះកិច្ចព្រមព្រៀងលទ្ធផលការប្រចាំឆ្នាំ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r31', type:'data', no:'', indicator:'៤.៣', result:'ភាគរយគ្រូ-បុគ្គលិក ចុះកិច្ចព្រមព្រៀងការងារប្រចាំឆ្នាំ', activity:'ចុះកិច្ចព្រមព្រៀងលទ្ធផលការប្រចាំឆ្នាំ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g5', type:'indicator', label:'៥ ដំណើរការបណ្ណាល័យ', colspan:9 },
+  { id:'r32', type:'data', no:'', indicator:'៥.១', result:'ចំនួនសៀវភៅសិស្សខ្ចី-សង/ឆ្នាំ', activity:'បណ្ណាល័យ-បន្ទប់ មានសៀវភៅ បណ្ណរក្ស ឧបករណ៍ឌីជីថល', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r33', type:'data', no:'', indicator:'៥.២', result:'ចំនួនដងគ្រូនាំសិស្សចូលបណ្ណាល័យ/ឆ្នាំ', activity:'មានកាលវីភាគចូលអានសៀវភៅ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g6', type:'indicator', label:'៦ ការធ្វើអធិការកិច្ចផ្ទៃក្នុង', colspan:9 },
+  { id:'r34', type:'data', no:'', indicator:'៦.១', result:'ភាគរយគ្រូទទួលការផ្ដល់ប្រឹក្សាអធិការ ≥ ១ ដង/ខែ', activity:'មានផែនការ-របាយការអធិការ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g7', type:'indicator', label:'៧ ការប្រជុំបច្ចេកទេស', colspan:9 },
+  { id:'r35', type:'data', no:'', indicator:'៧.១', result:'ចំនួនដងសាលារៀបចំប្រជុំបច្ចេកទេស', activity:'មានផែនការប្រជុំប្រចាំខែ ច្បាស់លាស់', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g8', type:'indicator', label:'៨ ការអនុវត្តកម្មវិធីសិក្សាក្រៅម៉ោង', colspan:9 },
+  { id:'r36', type:'data', no:'', indicator:'៨.១', result:'ចំនួនដងប្រកួតប្រជែងអំណាន-គណិត/ឆ្នាំ', activity:'មានផែនការប្រចាំឆ្នាំ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r37', type:'data', no:'', indicator:'៨.២', result:'ចំនួនក្លឹបជួយសិស្សរៀនយឺត', activity:'ថ្នាក់រៀនមានបញ្ជីឈ្មោះសិស្សសិក្សាមុនពេលរៀន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r38', type:'data', no:'', indicator:'៨.៣', result:'ចំនួនដងទស្សនកិច្ចសិក្សា/ឆ្នាំ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s2g9', type:'indicator', label:'៩ ការអនុវត្តការអប់រំសីលធម៌ ចរិយាធម៌', colspan:9 },
+  { id:'r39', type:'data', no:'', indicator:'៩.១', result:'សាលាមានកម្មវិធីលើកកម្ពស់ចរិយាធម៌', activity:'មានកម្មវិធីអប់រំចិត្ត-សង្គម ព្រះសង្ឃ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r40', type:'data', no:'', indicator:'៩.២', result:'ចំនួនដងព្រះសង្ឃផ្ដល់ធម៌/ឆ្នាំ', activity:'កាលវិភាគមុខវិជ្ជាសិល្បៈ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r41', type:'data', no:'', indicator:'៩.៣', result:'សាលាមានសកម្មភាពសិល្បៈ (ចម្រៀង គំនូរ)', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+
+  { id:'std3', type:'standard', label:'ស្តង់ដាទី៣៖ ការចូលរួមរបស់សហគមន៍ (៣សូចនាករគន្លឹះ ៥សូចនាកររង)', colspan:10 },
+  { id:'s3g1', type:'indicator', label:'១ ការបង្កើតនិងដំណើរការ គ.គ.ស. និង គ.គ.ថ.', colspan:9 },
+  { id:'r42', type:'data', no:'', indicator:'១.១', result:'ចំនួនដង គ.គ.ស. ប្រជុំ/ឆ្នាំ', activity:'មានសេចក្ដីសម្រេចស្ដីពីការបង្កើត គ.គ.ស.', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r43', type:'data', no:'', indicator:'១.២', result:'ភាគរយថ្នាក់រៀនបង្កើតនិងដំណើរការ គ.គ.ថ.', activity:'ស្វែងរកដៃគូប្រតិបត្តិការ-វិនិយោគ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s3g2', type:'indicator', label:'២ ការចូលរួមរបស់សហគមន៍', colspan:9 },
+  { id:'r44', type:'data', no:'', indicator:'២.១', result:'សាលាមានកិច្ចសហប្រតិបត្តិការជាមួយដៃគូ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r45', type:'data', no:'', indicator:'២.២', result:'ភាគរយសិស្សត្រៀមបោះបង់ ត្រឡប់មករៀន', activity:'ប្រជុំណែនាំ-ទប់ស្កាត់សិស្សបោះបង់', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s3g3', type:'indicator', label:'៣ ការគាំទ្ររបស់សហគមន៍', colspan:9 },
+  { id:'r46', type:'data', no:'', indicator:'៣.១', result:'បរិមាណចំណូលមូលនិធិបង់ចូលសាលា', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+
+  { id:'std4', type:'standard', label:'ស្តង់ដាទី៤៖ ដំណើរប្រតិបត្តិការ និងរដ្ឋបាលសាលារៀន (៦សូចនាករ ២១សូចនាកររង)', colspan:10 },
+  { id:'s4g1', type:'indicator', label:'១ ការគ្រប់គ្រងទូទៅ និងរដ្ឋបាល', colspan:9 },
+  { id:'r47', type:'data', no:'', indicator:'១.១', result:'ការរៀបចំទីចាត់ការ ទុកដាក់ឯកសារ', activity:'រៀបចំរបាយការណ៍ ឯកសារ', unit:'%', q1:'ទីចាត់ការស្អាត', q2:'មានទូ', q3:'រៀបឯកសារ', q4:'ពិនិត្យ', responsible:'លេង ចាន់លាវ', state:'', partner:'', community:'', other:'' },
+  { id:'r48', type:'data', no:'', indicator:'១.២', result:'ប្រើប្រាស់ App គ្រប់គ្រងទិន្នន័យសាលា (EFMS, HRMIS, GSP)', activity:'ប្រើ EFMS HRMIS GSP', unit:'%', q1:'បញ្ចូល', q2:'ប្រើប្រាស់', q3:'ប្រើប្រាស់', q4:'Update', responsible:'អ៊ុន ប៊ុនទុង', state:'', partner:'', community:'', other:'' },
+  { id:'r49', type:'data', no:'', indicator:'១.៣', result:'ភាគរយគ្រូលើស-ខ្វះ បានថយចុះ', activity:'ធ្វើស្ថិតិបុគ្គលិក-សិស្ស-ថ្នាក់', unit:'ដង', q1:'', q2:'', q3:'', q4:'1', responsible:'អ៊ុន ប៊ុនទុង', state:'', partner:'', community:'', other:'' },
+  { id:'s4g2', type:'indicator', label:'២ ការរៀបចំផែនការអភិវឌ្ឍសាលា', colspan:9 },
+  { id:'r50', type:'data', no:'', indicator:'២.១', result:'ផែនការ ៥ ឆ្នាំ / ៣ ឆ្នាំ / ប្រចាំឆ្នាំ', activity:'រៀបចំផែនការអភិវឌ្ឍ ច្បាស់លាស់', unit:'ចំនួន', q1:'1', q2:'2', q3:'3', q4:'4', responsible:'អ៊ុន ប៊ុនទុង', state:'', partner:'', community:'', other:'' },
+  { id:'s4g3', type:'indicator', label:'៣ ការវាយតម្លៃការបំពេញការងារបុគ្គលិក', colspan:9 },
+  { id:'r51', type:'data', no:'', indicator:'៣.១', result:'ភាគរយគ្រូបង្រៀន និងបុគ្គលិកអប់រំ បានចុះកិច្ចព្រមព្រៀងលទ្ធផលការងារ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r52', type:'data', no:'', indicator:'៣.២', result:'ចំនួននាយកសាលានិងនាយករង បានចុះកិច្ចព្រមព្រៀងលទ្ធផលការងារ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s4g4', type:'indicator', label:'៤ រង្វាយតម្លៃលទ្ធផលសិក្សា', colspan:9 },
+  { id:'r53', type:'data', no:'', indicator:'៤.១', result:'ការរៀបចំតេស្តស្តង់ដា ចុងឆ្នាំ-ប្រចាំខែ-ឆមាស', activity:'ធ្វើតេស្ត ប្រចាំខែ ឆមាស ចុងឆ្នាំ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s4g5', type:'indicator', label:'៥ ការលើកកម្ពស់សុខភាព និងអាហារូបត្ថម្ភ', colspan:9 },
+  { id:'r54', type:'data', no:'', indicator:'៥.១', result:'ការអនុវត្តកម្មវិធីអនាម័យ WASH', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r55', type:'data', no:'', indicator:'៥.២', result:'ភាគរយសិស្សសម្អាតដៃ ១០ ពេល/ថ្ងៃ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r56', type:'data', no:'', indicator:'៥.៣', result:'ភាគរយថ្នាក់រៀនមានម៉ោង WASH', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r57', type:'data', no:'', indicator:'៥.៤', result:'ភាគរយសិស្សស្គាល់គ្រោះថ្នាក់ (ជ្រូក ថ្ម ភ្ញ)', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r58', type:'data', no:'', indicator:'៥.៥', result:'ភាគរយថ្នាក់រៀនអនុវត្តការអប់រំពន្លត់អគ្គីភ័យ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r59', type:'data', no:'', indicator:'៥.៦', result:'ភាគរយករណីគ្រោះថ្នាក់ ត្រូវបានចូលទទួលបានជំនួយ', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r60', type:'data', no:'', indicator:'៥.៧', result:'ការអនុវត្តមុខវិជ្ជាអប់រំសុខភាព', activity:'', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r61', type:'data', no:'', indicator:'៥.៨', result:'ការលើកកម្ពស់បរិស្ថានស្អាត បៃតង', activity:'បែងចែកសិស្សជាក្រុម ថែទាំសួន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s4g6', type:'indicator', label:'៦ ការអភិវឌ្ឍហេដ្ឋារចនាសម្ព័ន្ធ', colspan:9 },
+  { id:'r62', type:'data', no:'', indicator:'៦.១', result:'សាលាមានបណ្តាញអគ្គីសនី-អ៊ីនធើណេត', activity:'ភ្ជាប់បណ្តាញ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r63', type:'data', no:'', indicator:'៦.២', result:'ភាគរយបន្ទប់ មានឧបករណ៍ទំនើប (LCD/Smart TV…)', activity:'ពិភាក្សា ទិញ LCD Smart TV', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r64', type:'data', no:'', indicator:'៦.៣', result:'សាលាមានបណ្ណាល័យ', activity:'មានបណ្ណាល័យ ស្អាត ដំណើរការ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r65', type:'data', no:'', indicator:'៦.៤', result:'សាលាមានបន្ទប់កុំព្យូទ័រ', activity:'ទិញសម្ភារៈ-បរិក្ខាព័ត៌មានវិទ្យា', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r66', type:'data', no:'', indicator:'៦.៥', result:'សាលាមានទីលានកីឡា', activity:'រៀបចំទីលាន បង្ហាត់ P.E.', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+
+  { id:'std5', type:'standard', label:'ស្តង់ដាទី៥ ៖ គណនេយ្យភាពរបស់សាលារៀន (៣សូចនាករ ៥សូចនាកររង)', colspan:10 },
+  { id:'s5g1', type:'indicator', label:'១ វេទិកាសាធារណៈ', colspan:9 },
+  { id:'r67', type:'data', no:'', indicator:'១.១', result:'ការជួបប្រជុំមាតាបិតា', activity:'ផ្សព្វផ្សាយ ចូលរួម តាមប្រជុំ-បណ្ដាញ', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s5g2', type:'indicator', label:'២ ការផ្សព្វផ្សាយព័ត៌មានជាសាធារណៈ', colspan:9 },
+  { id:'r68', type:'data', no:'', indicator:'២.១', result:'លទ្ធផលតេស្ត ត្រូវបានអនុម័ត-បិទផ្សាយ', activity:'ប្រជុំ-ពិភាក្សា ជាមួយអាជ្ញាធរ-គ.គ.ស.', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'s5g3', type:'indicator', label:'៣ ការទទួលបានការគាំទ្រពីថ្នាក់ជាតិ', colspan:9 },
+  { id:'r69', type:'data', no:'', indicator:'៣.១', result:'ចំនួនដងនាយក-នាយករង ទទួលការហ្វឹកហាត់', activity:'បញ្ជីរាយនាមទទួលការហ្វឹកហាត់', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r70', type:'data', no:'', indicator:'៣.២', result:'ភាគរយគ្រូ ទទួលការហ្វឹកហ្វឺន អំណាន-គណិតវិទ្យា', activity:'គ្រូទទួលការហ្វឹកហ្វឺន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+  { id:'r71', type:'data', no:'', indicator:'៣.៣', result:'ភាគរយគ្រូបង្រៀន បំពេញទស្សនកិច្ច សិក្សា ទៅសាលាផ្សេងក្នុងមួយឆ្នាំ', activity:'គ្រូទទួលការហ្វឹកហ្វឺន', unit:'', q1:'', q2:'', q3:'', q4:'', responsible:'', state:'', partner:'', community:'', other:'' },
+];
+
+let tableData2 = {};
+let tableData3 = {};
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function getNum(s){const n=parseFloat(String(s).replace(/[^0-9.-]/g,''));return isNaN(n)?0:n;}
+function fmt(n){return n===0?'0':n.toLocaleString('en-US');}
+function fmtMillion(riel){ const m = riel/1000000; const r=Math.round(m*100)/100; return r===0?'0':r.toLocaleString('en-US',{maximumFractionDigits:2}); }
+function fmtNum2(n){ const r=Math.round(n*100)/100; return r===0?'0':r.toLocaleString('en-US',{maximumFractionDigits:2}); }
+function rowStatusLogic(status){ if(status==='1')return '100%'; if(status==='3')return '0%'; return ''; }
+function noteLogic(status){ if(status==='1')return 'អនុវត្តចប់'; if(status==='3')return 'មិនទាន់ដល់ពេល'; if(status==='2')return 'កំពុងអនុវត្ត'; return ''; }
+
+function renderTable2(data) {
+  const tbody=document.getElementById('planBody');
+  tbody.innerHTML='';
+  PLAN_ROWS.forEach(row=>{
+    const tr=document.createElement('tr');
+    if(row.type==='total'){
+      tr.className='total-row';
+      tr.innerHTML=`<td colspan="10" style="font-weight:700">${row.label}</td><td class="num-readonly" id="cell-total-grand">0</td><td class="num-readonly" id="cell-total-state">0</td><td class="num-readonly" id="cell-total-partner">0</td><td class="num-readonly" id="cell-total-community">0</td><td class="num-readonly" id="cell-total-other">0</td>`;
+    } else if(row.type==='standard'){
+      tr.className='standard-row';
+      tr.innerHTML=`<td colspan="10">${row.label}</td><td class="num-readonly" data-std="${row.id}" data-col="grand">0</td><td class="num-readonly" data-std="${row.id}" data-col="state">0</td><td class="num-readonly" data-std="${row.id}" data-col="partner">0</td><td class="num-readonly" data-std="${row.id}" data-col="community">0</td><td class="num-readonly" data-std="${row.id}" data-col="other">0</td>`;
+    } else if(row.type==='indicator'){
+      tr.className='indicator-row';
+      tr.innerHTML=`<td></td><td colspan="9">${row.label}</td><td class="num-readonly" data-ind="${row.id}" data-col="grand">0</td><td class="num-readonly" data-ind="${row.id}" data-col="state">0</td><td class="num-readonly" data-ind="${row.id}" data-col="partner">0</td><td class="num-readonly" data-ind="${row.id}" data-col="community">0</td><td class="num-readonly" data-ind="${row.id}" data-col="other">0</td>`;
+    } else {
+      const d=data[row.id]||{};
+      const v=(col)=>escHtml(d[col]!==undefined?d[col]:(row[col]||''));
+      tr.className='data-row';
+      tr.innerHTML=`<td style="text-align:center;font-size:11px;color:#888"></td><td contenteditable="true" data-id="${row.id}" data-col="indicator">${v('indicator')}</td><td contenteditable="true" data-id="${row.id}" data-col="result">${v('result')}</td><td contenteditable="true" data-id="${row.id}" data-col="activity">${v('activity')}</td><td contenteditable="true" data-id="${row.id}" data-col="unit" style="text-align:center">${v('unit')}</td><td contenteditable="true" data-id="${row.id}" data-col="q1" style="text-align:center">${v('q1')}</td><td contenteditable="true" data-id="${row.id}" data-col="q2" style="text-align:center">${v('q2')}</td><td contenteditable="true" data-id="${row.id}" data-col="q3" style="text-align:center">${v('q3')}</td><td contenteditable="true" data-id="${row.id}" data-col="q4" style="text-align:center">${v('q4')}</td><td contenteditable="true" data-id="${row.id}" data-col="responsible">${v('responsible')}</td><td class="num-readonly" data-rowid="${row.id}" data-col="grand">0</td><td class="num" contenteditable="true" data-id="${row.id}" data-col="state">${v('state')}</td><td class="num" contenteditable="true" data-id="${row.id}" data-col="partner">${v('partner')}</td><td class="num" contenteditable="true" data-id="${row.id}" data-col="community">${v('community')}</td><td class="num" contenteditable="true" data-id="${row.id}" data-col="other">${v('other')}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  recalcAll2(data);
+}
+
+function recalcAll2(data){
+  const rowTotals={};
+  PLAN_ROWS.forEach(row=>{
+    if(row.type!=='data')return;
+    const d=data[row.id]||{};
+    const s=getNum(d.state||row.state||0),p=getNum(d.partner||row.partner||0),
+          c=getNum(d.community||row.community||0),o=getNum(d.other||row.other||0);
+    const g=s+p+c+o;
+    rowTotals[row.id]={state:s,partner:p,community:c,other:o,grand:g};
+    const el=document.querySelector(`td[data-rowid="${row.id}"][data-col="grand"]`);
+    if(el)el.textContent=fmt(g);
+  });
+  const indTotals={},stdTotals={},indToStd={};
+  let curInd=null,curStd=null;
+  PLAN_ROWS.forEach(row=>{
+    if(row.type==='standard'){curStd=row.id;stdTotals[curStd]={state:0,partner:0,community:0,other:0,grand:0};}
+    else if(row.type==='indicator'){curInd=row.id;indTotals[curInd]={state:0,partner:0,community:0,other:0,grand:0};indToStd[curInd]=curStd;}
+    else if(row.type==='data'&&curInd){
+      const t=rowTotals[row.id]||{};
+      ['state','partner','community','other','grand'].forEach(k=>indTotals[curInd][k]+=(t[k]||0));
+    }
+  });
+  Object.entries(indTotals).forEach(([id,t])=>{
+    const sId=indToStd[id];
+    if(sId&&stdTotals[sId])['state','partner','community','other','grand'].forEach(k=>stdTotals[sId][k]+=t[k]);
+    ['state','partner','community','other','grand'].forEach(col=>{
+      const el=document.querySelector(`td[data-ind="${id}"][data-col="${col}"]`);
+      if(el)el.textContent=fmt(t[col]||0);
+    });
+  });
+  let gS=0,gP=0,gC=0,gO=0,gT=0;
+  Object.entries(stdTotals).forEach(([id,t])=>{
+    ['state','partner','community','other','grand'].forEach(col=>{
+      const el=document.querySelector(`td[data-std="${id}"][data-col="${col}"]`);
+      if(el)el.textContent=fmt(t[col]||0);
+    });
+    gS+=t.state;gP+=t.partner;gC+=t.community;gO+=t.other;gT+=t.grand;
+  });
+  const se=(eid,v)=>{const e=document.getElementById(eid);if(e)e.textContent=fmt(v);};
+  se('cell-total-grand',gT);se('cell-total-state',gS);se('cell-total-partner',gP);se('cell-total-community',gC);se('cell-total-other',gO);
+  se('card-grand-total',gT);
+
+  // Update Panel 2 standard cards from stdTotals
+  const stdKeys=['std1','std2','std3','std4','std5'];
+  stdKeys.forEach((sid,i)=>{
+    const v2=stdTotals[sid]?stdTotals[sid].grand:0;
+    se('card-std'+(i+1), v2);
+  });
+
+  // Keep Panel 3 in sync if it's currently visible
+  if(currentTab===3) renderTable3();
+}
+
+document.addEventListener('input',e=>{
+  const td=e.target.closest('td[contenteditable][data-id]');
+  if(!td)return;
+  const id=td.dataset.id,col=td.dataset.col;
+  if(!tableData2[id])tableData2[id]={};
+  tableData2[id][col]=td.textContent.trim();
+  if(['state','partner','community','other','activity','indicator','result','responsible'].includes(col)) recalcAll2(tableData2);
+});
+
+// ═══════════════════════════════════════════════════
+// PANEL 3 — REPORT / ACHIEVEMENT TABLE
+// ═══════════════════════════════════════════════════
+
+/* keep existing code unchanged above */
+
+function renderTable3(){
+  const tbody=document.getElementById('reportBody');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  const rowBudget={};
+  PLAN_ROWS.forEach(row=>{
+    if(row.type!=='data')return;
+    const el=document.querySelector(`td[data-rowid="${row.id}"][data-col="grand"]`);
+    rowBudget[row.id]= el ? getNum(el.textContent) : 0;
+  });
+  const stdTotalRiel={};
+  ['std1','std2','std3','std4','std5'].forEach(sid=>{
+    const el=document.querySelector(`td[data-std="${sid}"][data-col="grand"]`);
+    stdTotalRiel[sid]= el ? getNum(el.textContent) : 0;
+  });
+  const grandEl=document.getElementById('cell-total-grand');
+  const grandRiel= grandEl ? getNum(grandEl.textContent) : 0;
+
+  PLAN_ROWS.forEach(row=>{
+    const tr=document.createElement('tr');
+    const d3=tableData3[row.id]||{};
+    if(row.type==='total'){
+      tr.className='r3-summary';
+      tr.innerHTML=`<td colspan="9" style="text-align:center;">${escHtml(row.label)}</td><td style="text-align:center;color:#2e7d32;">${fmtMillion(grandRiel)}</td><td colspan="5"></td><td></td>`;
+    } else if(row.type==='standard'){
+      tr.className='r3-section';
+      tr.innerHTML=`<td colspan="9" style="padding:8px 10px;">${escHtml(row.label)}</td><td style="text-align:center;">${fmtMillion(stdTotalRiel[row.id]||0)}</td><td colspan="5"></td><td></td>`;
+    } else if(row.type==='indicator'){
+      tr.className='r3-group';
+      tr.innerHTML=`<td></td><td colspan="8" style="padding:7px 10px;">${escHtml(row.label)}</td><td></td><td colspan="5"></td><td></td>`;
+    } else {
+      const budgetMilNum = (rowBudget[row.id]||0)/1000000;
+      const budgetMil = fmtNum2(budgetMilNum);
+      const pct = d3.pct || rowStatusLogic(d3.status);
+      const note = d3.note || noteLogic(d3.status);
+      const srcSumMil = getNum(d3.srcState) + getNum(d3.srcPartner) + getNum(d3.srcCommunity) + getNum(d3.srcOther);
+      const remainingMil = Math.max(budgetMilNum - srcSumMil, 0);
+      const isLocked = d3.status === '1'; // locked only when Col1 has ✔️
+
+      const editCell=(val,col,extra='')=>{
+        const v=escHtml(val===undefined||val===null?'':val);
+        if(isLocked) return `<td class="r3-locked" title="Locked">${v}</td>`;
+        return `<td contenteditable="true" class="r3-edit" data-r3row="${row.id}" data-r3col="${col}" style="outline:none;${extra}">${v}</td>`;
+      };
+
+      const checkCell=(checked,col)=>{
+        return `<td class="${isLocked ? 'r3-locked' : 'r3-edit logic-cell'}" ${isLocked ? '' : `data-r3row="${row.id}" data-r3col="${col}" data-r3check="1"`}>${checked ? '✔️' : ''}</td>`;
+      };
+
+      const activityCell = isLocked
+        ? `<td class="r3-locked" style="font-size:11px;" title="Locked">${escHtml(d3.activity || row.activity || '')}</td>`
+        : `<td style="font-size:11px;color:#455A64;" contenteditable="true" class="r3-edit" data-r3row="${row.id}" data-r3col="activity">${escHtml(d3.activity || row.activity || '')}</td>`;
+
+      tr.className = isLocked ? 'r3-data r3-locked-row' : 'r3-data';
+      tr.innerHTML=`
+        <td>${isLocked?'🔒':''}</td>
+        <td style="text-align:center;">${escHtml(row.indicator||'')}</td>
+        <td style="text-align:left;font-weight:600;">${escHtml(row.result||'')}</td>
+        ${activityCell}
+        ${checkCell(d3.status==='1','s1')}
+        ${checkCell(d3.status==='2','s2')}
+        ${checkCell(d3.status==='3','s3')}
+        ${editCell(pct,'pct','text-align:center;')}
+        ${editCell(d3.result2,'result2')}
+        <td style="text-align:center;font-weight:700;color:#6A1B9A;background:#EDE7F6;">${budgetMil}</td>
+        ${editCell(d3.srcState,'srcState','text-align:center;')}
+        ${editCell(d3.srcPartner,'srcPartner','text-align:center;')}
+        ${editCell(d3.srcCommunity,'srcCommunity','text-align:center;')}
+        ${editCell(d3.srcOther,'srcOther','text-align:center;')}
+        <td style="text-align:center;font-weight:700;">${isLocked ? '' : fmtNum2(remainingMil)}</td>
+        ${editCell(note,'note')}
+      `;
+    }
+    tbody.appendChild(tr);
+  });
+
+  const se=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=fmtMillion(v);};
+  se('r3-grand-total', grandRiel);
+  se('r3-std1', stdTotalRiel.std1);
+  se('r3-std2', stdTotalRiel.std2);
+  se('r3-std3', stdTotalRiel.std3);
+  se('r3-std4', stdTotalRiel.std4);
+  se('r3-std5', stdTotalRiel.std5);
+}
+
+/* keep existing code unchanged below */
+
+
+document.addEventListener('input',e=>{
+  const td=e.target.closest('td.r3-edit[data-r3row]:not([data-r3check])');
+  if(!td)return;
+  const rid=td.dataset.r3row, col=td.dataset.r3col;
+  if(!tableData3[rid])tableData3[rid]={};
+  tableData3[rid][col]=td.textContent.trim();
+  if(col==='srcState' || col==='srcPartner' || col==='srcCommunity' || col==='srcOther' || col==='activity') renderTable3();
+});
+
+document.addEventListener('click',e=>{
+  const td=e.target.closest('td.r3-edit[data-r3check]');
+  if(!td)return;
+  const rid=td.dataset.r3row, col=td.dataset.r3col;
+  if(!tableData3[rid])tableData3[rid]={};
+  if(col==='s1') tableData3[rid].status = tableData3[rid].status === '1' ? '' : '1';
+  if(col==='s2') tableData3[rid].status = tableData3[rid].status === '2' ? '' : '2';
+  if(col==='s3') tableData3[rid].status = tableData3[rid].status === '3' ? '' : '3';
+  tableData3[rid].pct = '';
+  tableData3[rid].note = '';
+  renderTable3();
+});
+
+// ═══════════════════════════════════════════════════
+// FIREBASE SAVE / LOAD
+// ═══════════════════════════════════════════════════
+function setStatus(online,text){
+  const dot=document.getElementById('statusDot');
+  const txt=document.getElementById('statusText');
+  dot.className='status-dot '+(online?'online':typeof online==='string'?online:'offline');
+  txt.textContent=text||'';
+}
+function showLoading(v){
+  const lb=document.getElementById('loadingBar');
+  lb.classList.toggle('active',v);
+}
+
+window.saveDocument = async function(){
+  showLoading(true);
+  try{
+    await set(REF_DOC,{toc:tocData,savedAt:new Date().toISOString()});
+    document.getElementById('lastSaved').textContent='| រក្សាទុក: '+new Date().toLocaleString('km-KH');
+    showToast('💾 ឯកសារគម្រោង — រក្សាទុកជោគជ័យ!','success');
+    setStatus('online','Firebase ✓');
+  }catch(e){showToast('❌ '+e.message,'error');}
+  showLoading(false);
+};
+window.loadDocument = async function(){
+  showLoading(true);
+  try{
+    const snap=await get(REF_DOC);
+    if(snap.exists()){
+      const d=snap.val();
+      if(d.toc && Array.isArray(d.toc)){
+        tocData=d.toc;
+      } else if(d.html){
+        // backward compatibility with old single-document format
+        tocData=[{title:'ឯកសារគម្រោង',page:'',content:d.html}];
+      }
+      renderAll();
+      document.getElementById('lastSaved').textContent='| ផ្ទុកពី: '+(d.savedAt?new Date(d.savedAt).toLocaleString('km-KH'):'?');
+      showToast('✅ ផ្ទុក ឯកសារគម្រោង ជោគជ័យ!','success');
+    } else {showToast('ℹ️ គ្មានទិន្នន័យ Firebase','info');}
+    setStatus('online','Firebase ✓');
+  }catch(e){setStatus('offline','Offline');showToast('⚠️ '+e.message,'error');}
+  showLoading(false);
+};
+window.exportDocJSON=()=>{
+  const blob=new Blob([JSON.stringify({toc:tocData,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  download(blob,'plandoc-'+new Date().toISOString().slice(0,10)+'.json');
+  showToast('📤 Export ឯកសារគម្រោង JSON','success');
+};
+
+window.save3Year = async function(){
+  showLoading(true);
+  try{
+    const payload={rows:tableData1.map(r=>r.cells),savedAt:new Date().toISOString()};
+    await set(REF_3YEAR,payload);
+    changedRows1.clear();
+    document.getElementById('lastSaved').textContent='| រក្សាទុក: '+new Date().toLocaleString('km-KH');
+    renderTable1(tableData1);
+    showToast('💾 ផែនការ ៣ ឆ្នាំ — រក្សាទុកជោគជ័យ!','success');
+  }catch(e){showToast('❌ '+e.message,'error');}
+  showLoading(false);
+};
+window.load3Year = async function(){
+  showLoading(true);
+  try{
+    const snap=await get(REF_3YEAR);
+    if(snap.exists()){
+      const d=snap.val();
+      if(d.rows){
+        tableData1=d.rows.map((r,i)=>({id:i,cells:[...r]}));
+        renderTable1(tableData1);
+        document.getElementById('lastSaved').textContent='| ផ្ទុកពី: '+(d.savedAt?new Date(d.savedAt).toLocaleString('km-KH'):'?');
+        showToast('✅ ផ្ទុក ផែនការ ៣ ឆ្នាំ ជោគជ័យ!','success');
+      }
+    } else {showToast('ℹ️ គ្មានទិន្នន័យ Firebase','info');}
+    setStatus('online','Firebase ✓');
+  }catch(e){setStatus('offline','Offline');showToast('⚠️ '+e.message,'error');}
+  showLoading(false);
+};
+
+window.saveActionPlan = async function(){
+  showLoading(true);
+  try{
+    await set(REF_ACTION,{rows:tableData2,savedAt:new Date().toISOString()});
+    document.getElementById('lastSaved').textContent='| រក្សាទុក: '+new Date().toLocaleString('km-KH');
+    showToast('💾 ផែនការប្រតិបត្តិ — រក្សាទុកជោគជ័យ!','success');
+    setStatus('online','Firebase ✓');
+  }catch(e){showToast('❌ '+e.message,'error');}
+  showLoading(false);
+};
+window.loadActionPlan = async function(){
+  showLoading(true);
+  try{
+    const snap=await get(REF_ACTION);
+    if(snap.exists()){
+      const d=snap.val();
+      tableData2=d.rows||{};
+      renderTable2(tableData2);
+      document.getElementById('lastSaved').textContent='| ផ្ទុកពី: '+(d.savedAt?new Date(d.savedAt).toLocaleString('km-KH'):'?');
+      showToast('✅ ផ្ទុក ផែនការប្រតិបត្តិ ជោគជ័យ!','success');
+    } else {showToast('ℹ️ គ្មានទិន្នន័យ Firebase','info');}
+    setStatus('online','Firebase ✓');
+  }catch(e){setStatus('offline','Offline');showToast('⚠️ '+e.message,'error');}
+  showLoading(false);
+};
+
+window.saveReportPlan = async function(){
+  showLoading(true);
+  try{
+    await set(REF_REPORT,{rows:tableData3,savedAt:new Date().toISOString()});
+    document.getElementById('lastSaved').textContent='| រក្សាទុក: '+new Date().toLocaleString('km-KH');
+    showToast('💾 របាយការណ៍សមិទ្ធិកម្ម — រក្សាទុកជោគជ័យ!','success');
+    setStatus('online','Firebase ✓');
+  }catch(e){showToast('❌ '+e.message,'error');}
+  showLoading(false);
+};
+window.loadReportPlan = async function(){
+  showLoading(true);
+  try{
+    const snap=await get(REF_REPORT);
+    if(snap.exists()){
+      const d=snap.val();
+      tableData3=d.rows||{};
+      renderTable3();
+      document.getElementById('lastSaved').textContent='| ផ្ទុកពី: '+(d.savedAt?new Date(d.savedAt).toLocaleString('km-KH'):'?');
+      showToast('✅ ផ្ទុក របាយការណ៍សមិទ្ធិកម្ម ជោគជ័យ!','success');
+    } else {showToast('ℹ️ គ្មានទិន្នន័យ Firebase','info');}
+    setStatus('online','Firebase ✓');
+  }catch(e){setStatus('offline','Offline');showToast('⚠️ '+e.message,'error');}
+  showLoading(false);
+};
+
+// ═══════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════
+let currentTab=1;
+window.switchTab=function(n){
+  currentTab=n;
+  document.getElementById('tab1').classList.toggle('active',n===1);
+  document.getElementById('tab2').classList.toggle('active',n===2);
+  document.getElementById('tab3').classList.toggle('active',n===3);
+  document.getElementById('tab4').classList.toggle('active',n===4);
+  document.getElementById('panel1').classList.toggle('active',n===1);
+  document.getElementById('panel2').classList.toggle('active',n===2);
+  document.getElementById('panel3').classList.toggle('active',n===3);
+  document.getElementById('panel4').classList.toggle('active',n===4);
+  document.getElementById('searchBox').value='';
+  document.getElementById('searchBox').style.display = n===1?'none':'';
+  if(n===4) renderTable3();
+  filterTable('');
+};
+
+window.currentSave=()=>currentTab===1?saveDocument():(currentTab===2?save3Year():(currentTab===3?saveActionPlan():saveReportPlan()));
+window.currentLoad=()=>currentTab===1?loadDocument():(currentTab===2?load3Year():(currentTab===3?loadActionPlan():loadReportPlan()));
+window.currentExport=()=>currentTab===1?exportDocJSON():(currentTab===2?export3YearJSON():(currentTab===3?exportActionJSON():exportReportJSON()));
+window.currentExportCSV=()=>{
+  if(currentTab===1){showToast('ℹ️ Export CSV មិនអនុវត្តចំពោះឯកសារនេះទេ — សូមប្រើ Export JSON ឬ Print','info');return;}
+  currentTab===2?export3YearCSV():(currentTab===3?exportActionCSV():exportReportCSV());
+};
+window.currentImport=()=>document.getElementById('importFile').click();
+window.currentReset=()=>{
+  if(!confirm('លុបទិន្នន័យទាំងអស់? / Clear all data?'))return;
+  if(currentTab===1){tocData=[{title:'ចំណងជើងថ្មី',page:'',content:''}];renderAll();}
+  else if(currentTab===2){tableData1=DEFAULT_ROWS.map((r,i)=>({id:i,cells:[...r]}));changedRows1.clear();renderTable1(tableData1);}
+  else if(currentTab===3){tableData2={};renderTable2(tableData2);}
+  else{tableData3={};renderTable3();}
+  showToast('🗑️ លុបទិន្នន័យរួចហើយ','info');
+};
+
+// ═══════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════
+function download(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+}
+window.export3YearJSON=()=>{
+  const blob=new Blob([JSON.stringify({rows:tableData1.map(r=>r.cells),exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  download(blob,'plan3year-'+new Date().toISOString().slice(0,10)+'.json');
+  showToast('📤 Export ផែនការ ៣ ឆ្នាំ JSON','success');
+};
+window.export3YearCSV=()=>{
+  const cols=['ល.រ','ស្តង់ដា','ស្រី/ប្រុស','ថវិកា','N-1','N','គោលដៅ','មូលហេតុ','N+2','N+3'];
+  const lines=[cols.map(c=>`"${c}"`).join(',')];
+  tableData1.forEach(r=>lines.push(r.cells.map(c=>`"${(c||'').replace(/"/g,'""')}"`).join(',')));
+  download(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),'plan3year.csv');
+  showToast('📤 Export CSV','success');
+};
+window.exportActionJSON=()=>{
+  const blob=new Blob([JSON.stringify({rows:tableData2,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  download(blob,'actionplan-'+new Date().toISOString().slice(0,10)+'.json');
+  showToast('📤 Export ផែនការប្រតិបត្តិ JSON','success');
+};
+window.exportActionCSV=()=>{
+  const cols=['id','indicator','result','activity','unit','Q1','Q2','Q3','Q4','responsible','state','partner','community','other'];
+  const lines=[cols.map(c=>`"${c}"`).join(',')];
+  PLAN_ROWS.filter(r=>r.type==='data').forEach(r=>{
+    const d=tableData2[r.id]||{};
+    lines.push(cols.map(c=>`"${(d[c]||r[c]||'').toString().replace(/"/g,'""')}"`).join(','));
+  });
+  download(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),'actionplan.csv');
+  showToast('📤 Export CSV','success');
+};
+window.exportReportJSON=()=>{
+  const blob=new Blob([JSON.stringify({rows:tableData3,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  download(blob,'reportplan-'+new Date().toISOString().slice(0,10)+'.json');
+  showToast('📤 Export របាយការណ៍សមិទ្ធិកម្ម JSON','success');
+};
+window.exportReportCSV=()=>{
+  const cols=['id','indicator','result','activity','status','pct','result2','srcState','srcPartner','srcCommunity','srcOther','note'];
+  const lines=[cols.map(c=>`"${c}"`).join(',')];
+  PLAN_ROWS.filter(r=>r.type==='data').forEach(r=>{
+    const d=tableData3[r.id]||{};
+    lines.push(cols.map(c=>`"${(d[c]||r[c]||'').toString().replace(/"/g,'""')}"`).join(','));
+  });
+  download(new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),'reportplan.csv');
+  showToast('📤 Export CSV','success');
+};
+window.handleImportFile=function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const obj=JSON.parse(ev.target.result);
+      if(currentTab===1){
+        if(obj.toc&&Array.isArray(obj.toc)){
+          tocData=obj.toc;
+          renderAll();
+          showToast('📥 Import ឯកសារគម្រោង ជោគជ័យ!','success');
+        } else if(obj.html){
+          tocData=[{title:'ឯកសារគម្រោង',page:'',content:obj.html}];
+          renderAll();
+          showToast('📥 Import ឯកសារគម្រោង ជោគជ័យ!','success');
+        } else showToast('❌ Format មិនត្រឹមត្រូវ','error');
+      } else if(currentTab===2){
+        if(obj.rows&&Array.isArray(obj.rows)){
+          tableData1=obj.rows.map((r,i)=>({id:i,cells:[...r]}));
+          changedRows1=new Set([...Array(tableData1.length).keys()]);
+          renderTable1(tableData1);
+          showToast('📥 Import ផែនការ ៣ ឆ្នាំ ជោគជ័យ!','success');
+        } else showToast('❌ Format មិនត្រឹមត្រូវ','error');
+      } else if(currentTab===3){
+        if(obj.rows&&typeof obj.rows==='object'&&!Array.isArray(obj.rows)){
+          tableData2=obj.rows;renderTable2(tableData2);
+          showToast('📥 Import ផែនការប្រតិបត្តិ ជោគជ័យ!','success');
+        } else showToast('❌ Format មិនត្រឹមត្រូវ','error');
+      } else {
+        if(obj.rows&&typeof obj.rows==='object'&&!Array.isArray(obj.rows)){
+          tableData3=obj.rows;renderTable3();
+          showToast('📥 Import របាយការណ៍សមិទ្ធិកម្ម ជោគជ័យ!','success');
+        } else showToast('❌ Format មិនត្រឹមត្រូវ','error');
+      }
+    }catch(err){showToast('❌ JSON Error: '+err.message,'error');}
+  };
+  reader.readAsText(file);e.target.value='';
+};
+
+// ═══════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════
+window.filterTable=function(q){
+  if(currentTab===1)return;
+  const id=currentTab===2?'tableBody':(currentTab===3?'planBody':'reportBody');
+  const rows=document.querySelectorAll(`#${id} tr`);
+  const lq=q.toLowerCase();
+  rows.forEach(tr=>{tr.style.display=(!q||tr.textContent.toLowerCase().includes(lq))?'':'none';});
+};
+
+// ═══════════════════════════════════════════════════
+// CALCULATOR
+// ═══════════════════════════════════════════════════
+let cCur='0',cExpr='',cOp='',cPrev='',cFresh=false;
+window.toggleCalc=()=>document.getElementById('calcOverlay').classList.toggle('active');
+window.closeCalcIfOutside=(e)=>{if(e.target===document.getElementById('calcOverlay'))toggleCalc();};
+window.calcInput=v=>{
+  if(cFresh){cCur=v;cFresh=false;}
+  else cCur=(cCur==='0'&&v!=='.')?v:cCur+v;
+  updateCalcDisp();
+};
+window.calcAction=op=>{
+  const num=parseFloat(cCur);
+  if(op==='C'){cCur='0';cExpr='';cOp='';cPrev='';cFresh=false;}
+  else if(op==='±'){cCur=String(-num);}
+  else if(op==='%'){cCur=String(num/100);}
+  else if(op==='='){
+    if(cOp&&cPrev!==''){
+      const a=parseFloat(cPrev),b=num;
+      let r;
+      if(cOp==='+')r=a+b;else if(cOp==='-')r=a-b;else if(cOp==='×')r=a*b;else r=b!==0?a/b:'Error';
+      cExpr=`${cPrev} ${cOp} ${cCur} =`;
+      cCur=isNaN(r)?'Error':String(Math.round(r*1e10)/1e10);
+      cOp='';cPrev='';cFresh=true;
+    }
+  } else {
+    if(cPrev!==''&&cOp&&!cFresh){
+      const a=parseFloat(cPrev),b=num;let r;
+      if(cOp==='+')r=a+b;else if(cOp==='-')r=a-b;else if(cOp==='×')r=a*b;else r=b!==0?a/b:'Error';
+      cCur=String(Math.round(r*1e10)/1e10);
+    }
+    cPrev=cCur;cOp=op;cExpr=`${cCur} ${op}`;cFresh=true;
+  }
+  updateCalcDisp();
+};
+function updateCalcDisp(){
+  const n=parseFloat(cCur);
+  document.getElementById('calcDisplay').textContent=isNaN(n)?cCur:n.toLocaleString('en',{maximumFractionDigits:10});
+  document.getElementById('calcExpr').textContent=cExpr;
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+setStatus('syncing','ភ្ជាប់ Firebase...');
+renderAll();
+renderTable1(tableData1);
+renderTable2(tableData2);
+
+(async()=>{
+  try{
+    showLoading(true);
+    const [sStruct,s0,s1,s2,s3]=await Promise.all([get(REF_STRUCTURE),get(REF_DOC),get(REF_3YEAR),get(REF_ACTION),get(REF_REPORT)]);
+
+    // ── Structure (PLAN_ROWS) ──────────────────────────────
+    // If Firebase already has a saved structure, use it instead of the
+    // hardcoded array in this file. If not, seed Firebase once with
+    // whatever PLAN_ROWS currently is, so the in-code array can safely
+    // be shortened/removed on future edits.
+    if(sStruct.exists()){
+      const d=sStruct.val();
+      if(d.planRows && Array.isArray(d.planRows) && d.planRows.length) PLAN_ROWS = d.planRows;
+    } else {
+      try{
+        await set(REF_STRUCTURE,{planRows:PLAN_ROWS, savedAt:new Date().toISOString()});
+        showToast('📤 បានផ្ទុករចនាសម្ព័ន្ធតារាង (PLAN_ROWS) ទៅ Firebase ជាលើកដំបូង','info');
+      }catch(e){/* keep using in-code PLAN_ROWS if seeding fails */}
+    }
+
+    if(s0.exists()){
+      const d=s0.val();
+      if(d.toc && Array.isArray(d.toc)){
+        tocData=d.toc;
+      } else if(d.html){
+        tocData=[{title:'ឯកសារគម្រោង',page:'',content:d.html}];
+      }
+      renderAll();
+    }
+    if(s1.exists()){
+      const d=s1.val();
+      if(d.rows)tableData1=d.rows.map((r,i)=>({id:i,cells:[...r]}));
+      renderTable1(tableData1);
+    }
+    if(s2.exists()){
+      const d=s2.val();
+      tableData2=d.rows||{};
+    }
+    renderTable2(tableData2);
+    if(s3.exists()){
+      const d=s3.val();
+      tableData3=d.rows||{};
+    }
+    renderTable3();
+    setStatus('online','Firebase ✓');
+    showToast('✅ ផ្ទុកទិន្នន័យពី Firebase ជោគជ័យ!','success');
+  }catch(err){
+    setStatus('offline','Offline — ប្រើទិន្នន័យស្ថានីយ');
+    showToast('⚠️ Firebase offline: '+err.message,'error');
+  }
+  showLoading(false);
+})();
+
+onValue(REF_STRUCTURE,(snap)=>{
+  if(document.activeElement&&document.activeElement.getAttribute('contenteditable'))return;
+  if(snap.exists()){
+    const d=snap.val();
+    if(d.planRows&&Array.isArray(d.planRows)&&d.planRows.length){
+      PLAN_ROWS=d.planRows;
+      renderTable2(tableData2);
+      renderTable3();
+    }
+  }
+});
+onValue(REF_DOC,(snap)=>{
+  if(document.activeElement&&document.activeElement.getAttribute('contenteditable'))return;
+  if(snap.exists()&&currentTab===1){
+    const d=snap.val();
+    if(d.toc && Array.isArray(d.toc)){
+      tocData=d.toc;
+      renderAll();
+    } else if(d.html){
+      tocData=[{title:'ឯកសារគម្រោង',page:'',content:d.html}];
+      renderAll();
+    }
+  }
+});
+onValue(REF_3YEAR,(snap)=>{
+  if(document.activeElement&&document.activeElement.getAttribute('contenteditable'))return;
+  if(snap.exists()&&currentTab===2){
+    const d=snap.val();if(d.rows){tableData1=d.rows.map((r,i)=>({id:i,cells:[...r]}));renderTable1(tableData1);}
+  }
+});
+onValue(REF_ACTION,(snap)=>{
+  if(document.activeElement&&document.activeElement.getAttribute('contenteditable'))return;
+  if(snap.exists()&&currentTab===3){
+    const d=snap.val();tableData2=d.rows||{};renderTable2(tableData2);
+  }
+});
+onValue(REF_REPORT,(snap)=>{
+  if(document.activeElement&&document.activeElement.getAttribute('contenteditable'))return;
+  if(snap.exists()&&currentTab===4){
+    const d=snap.val();tableData3=d.rows||{};renderTable3();
+  }
+});
+</script>
+</body>
+</html>
